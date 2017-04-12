@@ -7,19 +7,18 @@ pfurl - path-file url module
 '''
 
 
-# import  threading
-import  argparse
-import  time
+# import  argparse
+# import  time
 import  sys
 import  json
 import  pprint
-import  socket
+# import  socket
 import  pycurl
 import  io
 import  os
 import  urllib
 import  datetime
-import  codecs
+# import  codecs
 
 import  pudb
 

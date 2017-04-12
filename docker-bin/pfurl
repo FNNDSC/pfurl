@@ -58,7 +58,7 @@ parser.add_argument(
     '-c',
     action  = 'store',
     dest    = 'str_container',
-    default = 'fnndsc/pman',
+    default = 'fnndsc/pfurl',
     help    = 'the container image to instantiate.',
 )
 parser.add_argument(

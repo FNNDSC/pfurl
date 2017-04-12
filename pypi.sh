@@ -36,5 +36,5 @@ git push origin --tags
 
 rstcheck README.rst
 python3 setup.py sdist
-twine upload dist/purl-${VER}.tar.gz
+twine upload dist/pfurl-${VER}.tar.gz
 

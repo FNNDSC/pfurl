@@ -17,7 +17,7 @@ setup(
       long_description =   readme(),
       author           =   'Rudolph Pienaar',
       author_email     =   'rudolph.pienaar@gmail.com',
-      url              =   'https://github.com/FNNDSC/purl',
+      url              =   'https://github.com/FNNDSC/pfurl',
       packages         =   ['pfurl'],
       install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil'],
       test_suite       =   'nose.collector',

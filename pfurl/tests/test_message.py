@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from purl import Message
-from purl import Colors
+from pfurl import Message
+from pfurl import Colors
 
 class TestMessage(TestCase):
     def test_message_constructor(self):

@@ -65,7 +65,7 @@ def http_construct(args, unknown):
 
     return str_http
 
-def purl_do(args, unknown):
+def pfurl_do(args, unknown):
 
     str_http        = http_construct(args, unknown)
     str_otherArgs   = ' '.join(unknown)
@@ -73,7 +73,7 @@ def purl_do(args, unknown):
     str_raw = ''
     if args.b_raw: str_raw = "--raw"
 
-    str_CMD = "/usr/local/bin/purl --verb %s %s %s --jsonwrapper '%s' --msg '%s' %s" % (args.verb, str_raw, str_http, args.jsonwrapper, args.msg, str_otherArgs)
+    str_CMD = "/usr/local/bin/pfurl --verb %s %s %s --jsonwrapper '%s' --msg '%s' %s" % (args.verb, str_raw, str_http, args.jsonwrapper, args.msg, str_otherArgs)
     return str_CMD
 
 
@@ -134,7 +134,7 @@ args, unknown   = parser.parse_known_args()
 
 if __name__ == '__main__':
     try:
-        fname   = 'purl_do(args, unknown)'
+        fname   = 'pfurl_do(args, unknown)'
         str_cmd = eval(fname)
         print(str_cmd)
         os.system(str_cmd)

@@ -1,9 +1,9 @@
 from unittest import TestCase
 
-from purl import purl
+from pfurl import pfurl
 
 class TestPfurl(TestCase):
     def test_pfurl_constructor(self):
-        #myMan = purl()
+        #myMan = pfurl()
         # didn't crash
         self.assertTrue(True)

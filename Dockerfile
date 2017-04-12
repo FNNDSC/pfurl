@@ -11,7 +11,7 @@
 #
 # In the case of a proxy (located at 192.168.13.14:3128), do:
 #
-#    docker build --build-arg http_proxy=http://192.168.13.14:3128 -t local/pman .
+#    docker build --build-arg http_proxy=http://192.168.13.14:3128 -t local/pfurl .
 #
 
 FROM fnndsc/ubuntu-python3:latest

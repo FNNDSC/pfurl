@@ -16,8 +16,12 @@ import  pprint
 import  pycurl
 import  io
 import  os
-import  urllib
+import  urllib.parse
 import  datetime
+import  zipfile
+import  uuid
+import  base64
+
 # import  codecs
 
 import  pudb
@@ -675,6 +679,7 @@ class Pfurl():
         # c.setopt(c.URL, "http://%s:%s/api/v1/cmd/" % (str_ip, str_port))
         c.setopt(c.URL, "http://%s:%s%s" % (str_ip, str_port, self.str_URL))
         if str_fileToProcess:
+            self.qprint("Building form-based multi-part message...", comms = 'status')
             fread               = open(str_fileToProcess, "rb")
             filesize            = os.path.getsize(str_fileToProcess)
             c.setopt(c.HTTPPOST, [  ("local",       (c.FORM_FILE, str_fileToProcess)),
@@ -685,6 +690,7 @@ class Pfurl():
             c.setopt(c.READFUNCTION,    fread.read)
             c.setopt(c.POSTFIELDSIZE,   filesize)
         else:
+            self.qprint("Sending control message...", comms = 'status')
             # c.setopt(c.HTTPPOST, [
             #                         ("d_msg",    str_msg),
             #                      ]
@@ -1049,4 +1055,130 @@ class Pfurl():
 
         if not self.b_quiet: print(Colors.CYAN)
         return(str_stdout)
-    
+
+def zipdir(path, ziph, **kwargs):
+    """
+    Zip up a directory.
+
+    :param path:
+    :param ziph:
+    :param kwargs:
+    :return:
+    """
+    str_arcroot = ""
+    for k, v in kwargs.items():
+        if k == 'arcroot':  str_arcroot = v
+
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            str_arcfile = os.path.join(root, file)
+            if len(str_arcroot):
+                str_arcname = str_arcroot.split('/')[-1] + str_arcfile.split(str_arcroot)[1]
+            else:
+                str_arcname = str_arcfile
+            try:
+                ziph.write(str_arcfile, arcname = str_arcname)
+            except:
+                print("Skipping %s" % str_arcfile)
+
+
+def zip_process(**kwargs):
+    """
+    Process zip operations.
+
+    :param kwargs:
+    :return:
+    """
+
+    str_localPath   = ""
+    str_zipFileName = ""
+    str_action      = "zip"
+    str_arcroot     = ""
+    for k,v in kwargs.items():
+        if k == 'path':             str_localPath   = v
+        if k == 'action':           str_action      = v
+        if k == 'payloadFile':      str_zipFileName = v
+        if k == 'arcroot':          str_arcroot     = v
+
+    if str_action       == 'zip':
+        str_mode        = 'w'
+        str_zipFileName = '%s.zip' % uuid.uuid4()
+    else:
+        str_mode        = 'r'
+
+    ziphandler          = zipfile.ZipFile(str_zipFileName, str_mode, zipfile.ZIP_DEFLATED)
+    if str_mode == 'w':
+        if os.path.isdir(str_localPath):
+            zipdir(str_localPath, ziphandler, arcroot = str_arcroot)
+        else:
+            if len(str_arcroot):
+                str_arcname = str_arcroot.split('/')[-1] + str_localPath.split(str_arcroot)[1]
+            else:
+                str_arcname = str_localPath
+            try:
+                ziphandler.write(str_localPath, arcname = str_arcname)
+            except:
+                ziphandler.close()
+                os.remove(str_zipFileName)
+                return {
+                    'msg':      json.dumps({"msg": "No file or directory found for '%s'" % str_localPath}),
+                    'status':   False
+                }
+    if str_mode     == 'r':
+        ziphandler.extractall(str_localPath)
+    ziphandler.close()
+    return {
+        'msg':              '%s operation successful' % str_action,
+        'fileProcessed':    str_zipFileName,
+        'status':           True,
+        'path':             str_localPath,
+        'zipmode':          str_mode,
+        'filesize':         "{:,}".format(os.stat(str_zipFileName).st_size)
+    }
+
+
+def base64_process(**kwargs):
+    """
+    Process base64 file io
+    """
+
+    str_fileToSave      = ""
+    str_fileToRead      = ""
+    str_action          = "encode"
+    data                = None
+
+    for k,v in kwargs.items():
+        if k == 'action':           str_action          = v
+        if k == 'payloadBytes':     data                = v
+        if k == 'payloadFile':      str_fileToRead      = v
+        if k == 'saveToFile':       str_fileToSave      = v
+        # if k == 'sourcePath':       str_sourcePath      = v
+
+    if str_action       == "encode":
+        # Encode the contents of the file at targetPath as ASCII for transmission
+        if len(str_fileToRead):
+            with open(str_fileToRead, 'rb') as f:
+                data            = f.read()
+                f.close()
+        data_b64            = base64.b64encode(data)
+        with open(str_fileToSave, 'wb') as f:
+            f.write(data_b64)
+            f.close()
+        return {
+            'msg':              'Encode successful',
+            'fileProcessed':    str_fileToSave,
+            'status':           True
+            # 'encodedBytes':     data_b64
+        }
+
+    if str_action       == "decode":
+        bytes_decoded     = base64.b64decode(data)
+        with open(str_fileToSave, 'wb') as f:
+            f.write(bytes_decoded)
+            f.close()
+        return {
+            'msg':              'Decode successful',
+            'fileProcessed':    str_fileToSave,
+            'status':           True
+            # 'decodedBytes':     bytes_decoded
+        }

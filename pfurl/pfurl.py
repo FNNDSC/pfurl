@@ -105,6 +105,8 @@ class Pfurl():
         self.b_useDebug         = False
         self.str_debugFile      = ''
 
+        self.str_desc           = ""
+
         self.LC                 = 40
         self.RC                 = 40
 
@@ -130,6 +132,7 @@ class Pfurl():
             if key == 'useDebug':       self.b_useDebug             = val
             if key == 'debugFile':      self.str_debugFile          = val
             if key == 'startFromCLI':   self._startFromCLI          = val
+            if key == 'desc':           self.str_desc               = val
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)
@@ -142,17 +145,8 @@ class Pfurl():
 
         if not self.b_quiet:
 
-            print(Colors.LIGHT_GREEN)
-            print("""
-            \t\t\t\t+---------------------+
-            \t\t\t\t|  Welcome to pfurl!  |
-            \t\t\t\t+---------------------+
-            """)
-            print(Colors.CYAN + """
-            'pfurl' is a wrapper about pycurl, originally designed for the ChRIS/pman interface.
-            It also functions as a reasonable CLI curl client, too!
+            print(self.str_desc)
 
-            Type 'pfurl --man commands' for more help.""")
             if self.b_useDebug:
                 print("""
             Debugging output is directed to the file '%s'.

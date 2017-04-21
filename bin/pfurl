@@ -93,21 +93,28 @@ parser.add_argument(
     action  = 'store',
     default = 0
 )
-
+parser.add_argument(
+    '--httpResponse',
+    help    = 'if specified, return HTTP responses',
+    dest    = 'b_httpResponse',
+    action  = 'store_true',
+    default = False
+)
 
 args    = parser.parse_args()
 pfurl  = pfurl.Pfurl(
-    msg          = args.msg,
-    http         = args.http,
-    verb         = args.verb,
-    contentType  = args.contentType,
-    auth         = args.auth,
-    b_raw        = args.b_raw,
-    b_quiet      = args.b_quiet,
-    b_oneShot    = args.b_oneShot,
-    jsonwrapper  = args.jsonwrapper,
-    man          = args.man,
-    startFromCLI = True
+    msg             = args.msg,
+    http            = args.http,
+    verb            = args.verb,
+    contentType     = args.contentType,
+    auth            = args.auth,
+    b_raw           = args.b_raw,
+    b_quiet         = args.b_quiet,
+    b_oneShot       = args.b_oneShot,
+    b_httpResponse  = args.b_httpResponse,
+    jsonwrapper     = args.jsonwrapper,
+    man             = args.man,
+    startFromCLI    = True
     )
 
 if not args.jsonpprintindent:

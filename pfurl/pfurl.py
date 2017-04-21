@@ -22,6 +22,13 @@ import  zipfile
 import  uuid
 import  base64
 
+from    http.server     import  BaseHTTPRequestHandler
+from    http.client     import  HTTPResponse
+from    io              import  StringIO
+import  requests
+
+import  webob
+
 # import  codecs
 
 import  pudb
@@ -31,7 +38,28 @@ from    ._colors         import  Colors
 from    .message         import  Message
 
 # A global variable that tracks if script was started from CLI or programmatically
-b_startFromCLI  = False
+Gb_startFromCLI             = False
+
+class FakeSocket():
+    def __init__(self, response_str):
+        self._file = StringIO(response_str.decode())
+    def makefile(self, *args, **kwargs):
+        return self._file
+
+
+class HTTPRequest(BaseHTTPRequestHandler):
+
+    def __init__(self, astr_input, *args, **kwargs):
+        # BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+        request_text = astr_input
+        self.rfile = StringIO(request_text)
+        self.raw_requestline = bytes(self.rfile.readline(), 'utf-8')
+        self.error_code = self.error_message = None
+        self.parse_request()
+
+    def send_error(self, code, message):
+        self.error_code = code
+        self.error_message = message
 
 class Pfurl():
 
@@ -98,6 +126,7 @@ class Pfurl():
         self.b_quiet            = False
         self.b_raw              = False
         self.b_oneShot          = False
+        self.b_httpResponse     = False
         self.auth               = ''
         self.str_jsonwrapper    = ''
         self.str_contentType    = ''
@@ -123,6 +152,7 @@ class Pfurl():
             if key == 'b_quiet':        self.b_quiet                = val
             if key == 'b_raw':          self.b_raw                  = val
             if key == 'b_oneShot':      self.b_oneShot              = val
+            if key == 'b_httpResponse': self.b_httpResponse         = val
             if key == 'man':            self.str_man                = val
             if key == 'jsonwrapper':    self.str_jsonwrapper        = val
             if key == 'useDebug':       self.b_useDebug             = val
@@ -194,7 +224,7 @@ class Pfurl():
             Additionally, a 'message' described in JSON syntax can be pushed to the
             remote service, in the following syntax: """ + Colors.GREEN + """
 
-                 ./pfurl.py [--auth <username:passwd>] [--verb <GET/POST>]   \\
+                 pfurl     [--auth <username:passwd>] [--verb <GET/POST>]   \\
                             --http <IP>[:<port>]</some/path/>               \\
                            [--msg <JSON-formatted-string>]
 
@@ -202,7 +232,8 @@ class Pfurl():
             In the case of the 'pman' system this --msg flag has very specific
             contextual syntax, for example:
             """ + Colors.GREEN + """
-                 ./pfurl.py --verb POST --http %s:%s/api/v1/cmd/ --msg \\
+
+                 pfurl      --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                                 '{  "action": "run",
                                     "meta": {
                                         "cmd":      "cal 7 1970",
@@ -272,6 +303,7 @@ class Pfurl():
 
                 """ + Colors.YELLOW + """EXAMPLE:
                 """ + Colors.LIGHT_GREEN + """
+                
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
@@ -299,6 +331,7 @@ class Pfurl():
                 """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR  + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
+                
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
@@ -363,6 +396,7 @@ class Pfurl():
 
                 """ + Colors.YELLOW + """EXAMPLE -- using zip:
                 """ + Colors.LIGHT_GREEN + """
+                
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
@@ -390,6 +424,7 @@ class Pfurl():
                 """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
+                
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
@@ -414,6 +449,20 @@ class Pfurl():
                 """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR
 
         return str_manTxt
+
+    def httpHeaders_strip(self, str_response):
+        """
+        Strips the http header from a response.
+        
+        :param str_response: Input string with an http header
+        :return: String w/o the http header
+        """
+        print(str_response)
+        l_response  = str_response.split('\n')
+        print(l_response)
+        print([len(i) for i in l_response])
+        return l_response[-1]
+
 
     def pull_core(self, **kwargs):
         """
@@ -460,6 +509,9 @@ class Pfurl():
 
         self.qprint('Incoming transmission received, length = %s' % "{:,}".format(len(str_response)),
                     comms = 'rx')
+
+        str_response = self.httpHeaders_strip(str_response)
+
         return str_response
 
     def pullPath_core(self, d_msg, **kwargs):

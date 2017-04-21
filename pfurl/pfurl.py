@@ -7,12 +7,9 @@ pfurl - path-file url module
 '''
 
 
-# import  argparse
-# import  time
 import  sys
 import  json
 import  pprint
-# import  socket
 import  pycurl
 import  io
 import  os
@@ -21,11 +18,6 @@ import  datetime
 import  zipfile
 import  uuid
 import  base64
-
-from    http.server     import  BaseHTTPRequestHandler
-from    http.client     import  HTTPResponse
-from    io              import  StringIO
-import  requests
 
 import  webob
 

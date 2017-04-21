@@ -1,5 +1,5 @@
 ##############
-pfurl - v1.0.3
+pfurl - v1.1.0
 ##############
 
 .. image:: https://badge.fury.io/py/pman.svg

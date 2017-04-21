@@ -40,26 +40,6 @@ from    .message         import  Message
 # A global variable that tracks if script was started from CLI or programmatically
 Gb_startFromCLI             = False
 
-class FakeSocket():
-    def __init__(self, response_str):
-        self._file = StringIO(response_str.decode())
-    def makefile(self, *args, **kwargs):
-        return self._file
-
-
-class HTTPRequest(BaseHTTPRequestHandler):
-
-    def __init__(self, astr_input, *args, **kwargs):
-        # BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
-        request_text = astr_input
-        self.rfile = StringIO(request_text)
-        self.raw_requestline = bytes(self.rfile.readline(), 'utf-8')
-        self.error_code = self.error_message = None
-        self.parse_request()
-
-    def send_error(self, code, message):
-        self.error_code = code
-        self.error_message = message
 
 class Pfurl():
 
@@ -450,20 +430,6 @@ class Pfurl():
 
         return str_manTxt
 
-    def httpHeaders_strip(self, str_response):
-        """
-        Strips the http header from a response.
-        
-        :param str_response: Input string with an http header
-        :return: String w/o the http header
-        """
-        print(str_response)
-        l_response  = str_response.split('\n')
-        print(l_response)
-        print([len(i) for i in l_response])
-        return l_response[-1]
-
-
     def pull_core(self, **kwargs):
         """
         Just the core of the pycurl logic.
@@ -509,8 +475,6 @@ class Pfurl():
 
         self.qprint('Incoming transmission received, length = %s' % "{:,}".format(len(str_response)),
                     comms = 'rx')
-
-        str_response = self.httpHeaders_strip(str_response)
 
         return str_response
 

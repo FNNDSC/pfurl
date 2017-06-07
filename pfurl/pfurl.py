@@ -7,12 +7,9 @@ pfurl - path-file url module
 '''
 
 
-# import  argparse
-# import  time
 import  sys
 import  json
 import  pprint
-# import  socket
 import  pycurl
 import  io
 import  os
@@ -21,11 +18,6 @@ import  datetime
 import  zipfile
 import  uuid
 import  base64
-
-from    http.server     import  BaseHTTPRequestHandler
-from    http.client     import  HTTPResponse
-from    io              import  StringIO
-import  requests
 
 import  webob
 
@@ -40,26 +32,6 @@ from    .message         import  Message
 # A global variable that tracks if script was started from CLI or programmatically
 Gb_startFromCLI             = False
 
-class FakeSocket():
-    def __init__(self, response_str):
-        self._file = StringIO(response_str.decode())
-    def makefile(self, *args, **kwargs):
-        return self._file
-
-
-class HTTPRequest(BaseHTTPRequestHandler):
-
-    def __init__(self, astr_input, *args, **kwargs):
-        # BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
-        request_text = astr_input
-        self.rfile = StringIO(request_text)
-        self.raw_requestline = bytes(self.rfile.readline(), 'utf-8')
-        self.error_code = self.error_message = None
-        self.parse_request()
-
-    def send_error(self, code, message):
-        self.error_code = code
-        self.error_message = message
 
 class Pfurl():
 
@@ -170,17 +142,8 @@ class Pfurl():
 
         if not self.b_quiet:
 
-            print(Colors.LIGHT_GREEN)
-            print("""
-            \t\t\t\t+---------------------+
-            \t\t\t\t|  Welcome to pfurl!  |
-            \t\t\t\t+---------------------+
-            """)
-            print(Colors.CYAN + """
-            'pfurl' is a wrapper about pycurl, originally designed for the ChRIS/pman interface.
-            It also functions as a reasonable CLI curl client, too!
+            print(self.str_desc)
 
-            Type 'pfurl --man commands' for more help.""")
             if self.b_useDebug:
                 print("""
             Debugging output is directed to the file '%s'.
@@ -450,20 +413,6 @@ class Pfurl():
 
         return str_manTxt
 
-    def httpHeaders_strip(self, str_response):
-        """
-        Strips the http header from a response.
-        
-        :param str_response: Input string with an http header
-        :return: String w/o the http header
-        """
-        print(str_response)
-        l_response  = str_response.split('\n')
-        print(l_response)
-        print([len(i) for i in l_response])
-        return l_response[-1]
-
-
     def pull_core(self, **kwargs):
         """
         Just the core of the pycurl logic.
@@ -509,8 +458,6 @@ class Pfurl():
 
         self.qprint('Incoming transmission received, length = %s' % "{:,}".format(len(str_response)),
                     comms = 'rx')
-
-        str_response = self.httpHeaders_strip(str_response)
 
         return str_response
 
@@ -1246,6 +1193,9 @@ def base64_process(**kwargs):
         }
 
     if str_action       == "decode":
+        if len(data) % 4:
+            # not a multiple of 4, add padding:
+            data += '=' * (4 - len(data) % 4)
         bytes_decoded     = base64.b64decode(data)
         with open(str_fileToSave, 'wb') as f:
             f.write(bytes_decoded)

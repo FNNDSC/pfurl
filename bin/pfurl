@@ -10,11 +10,56 @@
 import sys, os
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), '..'))
 
-import argparse, socket, json, sys, pfurl
+import  socket
+import  json
+import  sys
+import  pfurl
+from    argparse            import RawTextHelpFormatter
+from    argparse            import ArgumentParser
+from    pfurl._colors       import Colors
 
 str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
 str_defPort = '5055'
-parser  = argparse.ArgumentParser(description = 'curl-type comms in the pman system')
+
+str_version = "1.1.1"
+str_desc = Colors.CYAN + """
+
+        __            _ 
+       / _|          | |
+ _ __ | |_ _   _ _ __| |
+| '_ \|  _| | | | '__| |
+| |_) | | | |_| | |  | |
+| .__/|_|  \__,_|_|  |_|
+| |                     
+|_|                     
+
+
+                            Process-File-over-URL
+
+           A simple URL-based communication and control script.
+
+                              -- version """ + \
+           Colors.YELLOW + str_version + Colors.CYAN + """ --
+           
+    'pfurl' sends REST conforming commands and data to remote services, similar
+    in some ways to the well-known CLI tool, 'curl' or the Python tool, 'httpie'
+    
+    'pfurl' not only sends curl type payloads, but can also zip and unzip entire
+    directories of files for transmission and reception.
+    
+    'pfurl' is designed to be part of the ChRIS/CHIPS framework.
+    
+""" + \
+           Colors.BLINK_RED +  """
+        
+              +---------------------------------------------------------+
+              | NOTE THAT 'pfurl' COMMS ARE NOT NATIVELY ENCRYPTED!     |
+              | USE AN SSH TUNNEL IF YOU NEED SECURE DATA TRANSMISSION. |
+              +---------------------------------------------------------+
+              
+""" + Colors.NO_COLOUR
+
+parser  = ArgumentParser(description = str_desc, formatter_class = RawTextHelpFormatter)
 
 parser.add_argument(
     '--msg',
@@ -100,8 +145,21 @@ parser.add_argument(
     action  = 'store_true',
     default = False
 )
+parser.add_argument(
+    '--version',
+    help    = 'if specified, print version number',
+    dest    = 'b_version',
+    action  = 'store_true',
+    default = False
+)
+
 
 args    = parser.parse_args()
+
+if args.b_version:
+    print("Version: %s" % str_version)
+    sys.exit(1)
+
 pfurl  = pfurl.Pfurl(
     msg                         = args.msg,
     http                        = args.http,

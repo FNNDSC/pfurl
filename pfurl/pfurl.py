@@ -100,41 +100,41 @@ class Pfurl():
     def __init__(self, **kwargs):
         # threading.Thread.__init__(self)
 
-        self._log                   = Message()
-        self._log._b_syslog         = True
-        self.__name                 = "Pfurl"
-        self.b_useDebug             = False
-        self._startFromCLI          = False
+        self._log                       = Message()
+        self._log._b_syslog             = True
+        self.__name                     = "Pfurl"
+        self.b_useDebug                 = False
+        self._startFromCLI              = False
 
-        str_debugDir                = '%s/tmp' % os.environ['HOME']
+        str_debugDir                    = '%s/tmp' % os.environ['HOME']
         if not os.path.exists(str_debugDir):
             os.makedirs(str_debugDir)
-        self.str_debugFile          = '%s/debug-charm.log' % str_debugDir
+        self.str_debugFile              = '%s/debug-charm.log' % str_debugDir
 
-        self.str_http           = ""
-        self.str_ip             = ""
-        self.str_port           = ""
-        self.str_URL            = ""
-        self.str_verb           = ""
-        self.str_msg            = ""
-        self.str_auth           = ""
-        self.d_msg              = {}
-        self.str_protocol       = "http"
-        self.pp                 = pprint.PrettyPrinter(indent=4)
-        self.b_man              = False
-        self.str_man            = ''
-        self.b_quiet            = False
-        self.b_raw              = False
-        self.b_oneShot          = False
-        self.b_httpResponse     = False
-        self.auth               = ''
-        self.str_jsonwrapper    = ''
-        self.str_contentType    = ''
-        self.b_useDebug         = False
-        self.str_debugFile      = ''
+        self.str_http                   = ""
+        self.str_ip                     = ""
+        self.str_port                   = ""
+        self.str_URL                    = ""
+        self.str_verb                   = ""
+        self.str_msg                    = ""
+        self.str_auth                   = ""
+        self.d_msg                      = {}
+        self.str_protocol               = "http"
+        self.pp                         = pprint.PrettyPrinter(indent=4)
+        self.b_man                      = False
+        self.str_man                    = ''
+        self.b_quiet                    = False
+        self.b_raw                      = False
+        self.b_oneShot                  = False
+        self.b_httpResponseBodyParse    = False
+        self.auth                       = ''
+        self.str_jsonwrapper            = ''
+        self.str_contentType            = ''
+        self.b_useDebug                 = False
+        self.str_debugFile              = ''
 
-        self.LC                 = 40
-        self.RC                 = 40
+        self.LC                         = 40
+        self.RC                         = 40
 
         for key,val in kwargs.items():
             if key == 'msg':
@@ -143,21 +143,21 @@ class Pfurl():
                     self.d_msg              = json.loads(self.str_msg)
                 except:
                     pass
-            if key == 'http':           self.httpStr_parse( http    = val)
-            if key == 'auth':           self.str_auth               = val
-            if key == 'verb':           self.str_verb               = val
-            if key == 'contentType':    self.str_contentType        = val
-            if key == 'ip':             self.str_ip                 = val
-            if key == 'port':           self.str_port               = val
-            if key == 'b_quiet':        self.b_quiet                = val
-            if key == 'b_raw':          self.b_raw                  = val
-            if key == 'b_oneShot':      self.b_oneShot              = val
-            if key == 'b_httpResponse': self.b_httpResponse         = val
-            if key == 'man':            self.str_man                = val
-            if key == 'jsonwrapper':    self.str_jsonwrapper        = val
-            if key == 'useDebug':       self.b_useDebug             = val
-            if key == 'debugFile':      self.str_debugFile          = val
-            if key == 'startFromCLI':   self._startFromCLI          = val
+            if key == 'http':                       self.httpStr_parse( http        = val)
+            if key == 'auth':                       self.str_auth                   = val
+            if key == 'verb':                       self.str_verb                   = val
+            if key == 'contentType':                self.str_contentType            = val
+            if key == 'ip':                         self.str_ip                     = val
+            if key == 'port':                       self.str_port                   = val
+            if key == 'b_quiet':                    self.b_quiet                    = val
+            if key == 'b_raw':                      self.b_raw                      = val
+            if key == 'b_oneShot':                  self.b_oneShot                  = val
+            if key == 'b_httpResponseBodyParse':    self.b_httpResponseBodyParse    = val
+            if key == 'man':                        self.str_man                    = val
+            if key == 'jsonwrapper':                self.str_jsonwrapper            = val
+            if key == 'useDebug':                   self.b_useDebug                 = val
+            if key == 'debugFile':                  self.str_debugFile              = val
+            if key == 'startFromCLI':               self._startFromCLI              = val
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)
@@ -1074,6 +1074,23 @@ class Pfurl():
             self.str_ip     = str_IPport.split(':')
             self.str_port   = args.str_port
 
+    def httpResponse_bodyParse(self, **kwargs):
+        """
+        Returns the *body* from a http response.
+
+        :param kwargs: response = <string>
+        :return: the <body> from the http <string>
+        """
+
+        str_response    = ''
+        for k,v in kwargs.items():
+            if k == 'response': str_response    = v
+        try:
+            str_body        = str_response.split('\r\n\r\n')[1]
+        except:
+            str_body        = str_response
+        return str_body
+
     def __call__(self, *args, **kwargs):
         """
         Main entry point for "calling".
@@ -1100,12 +1117,17 @@ class Pfurl():
                     d_ret = self.pull_core(msg = self.d_msg)
                 if self.str_verb == 'POST':
                     d_ret = self.push_core(self.d_msg)
-            str_stdout  = json.dumps(d_ret)
+            if not self.b_httpResponseBodyParse:
+                str_stdout  = json.dumps(d_ret)
+            else:
+                str_stdout  = '%s' % d_ret
         else:
             d_ret = self.pull_core()
             str_stdout  = '%s' % d_ret
 
         if not self.b_quiet: print(Colors.CYAN)
+        if self.b_httpResponseBodyParse:
+            str_stdout = self.httpResponse_bodyParse(response = str_stdout)
         return(str_stdout)
 
 def zipdir(path, ziph, **kwargs):

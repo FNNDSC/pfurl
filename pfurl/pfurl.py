@@ -107,6 +107,9 @@ class Pfurl():
 
         self.LC                         = 40
         self.RC                         = 40
+        self.str_name                   = ''
+        self.str_version                = ''
+        self.str_desc                   = ''
 
         for key,val in kwargs.items():
             if key == 'msg':
@@ -130,6 +133,9 @@ class Pfurl():
             if key == 'useDebug':                   self.b_useDebug                 = val
             if key == 'debugFile':                  self.str_debugFile              = val
             if key == 'startFromCLI':               self._startFromCLI              = val
+            if key == 'name':                       self.str_name                   = val
+            if key == 'version':                    self.str_version                = val
+            if key == 'desc':                       self.str_desc                   = val
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)

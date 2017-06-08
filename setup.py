@@ -13,7 +13,7 @@ def readme():
 setup(
       name             =   'pfurl',
       version          =   '1.1.3',
-      description      =   '(Python) Process Manager',
+      description      =   '(Python) Path-File URL comms',
       long_description =   readme(),
       author           =   'Rudolph Pienaar',
       author_email     =   'rudolph.pienaar@gmail.com',

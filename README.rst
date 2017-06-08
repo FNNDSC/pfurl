@@ -1,15 +1,15 @@
 ##############
-pfurl - v1.1.3
+pfurl - v1.1.4
 ##############
 
-.. image:: https://badge.fury.io/py/pman.svg
-    :target: https://badge.fury.io/py/pman
+.. image:: https://badge.fury.io/py/pfurl.svg
+    :target: https://badge.fury.io/py/pfurl
 
-.. image:: https://travis-ci.org/FNNDSC/pman.svg?branch=master
-    :target: https://travis-ci.org/FNNDSC/pman
+.. image:: https://travis-ci.org/FNNDSC/pfurl.svg?branch=master
+    :target: https://travis-ci.org/FNNDSC/pfurl
 
 .. image:: https://img.shields.io/badge/python-3.5%2B-blue.svg
-    :target: https://badge.fury.io/py/pman
+    :target: https://badge.fury.io/py/pfurl
 
 .. contents:: Table of Contents
 

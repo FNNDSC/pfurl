@@ -623,7 +623,10 @@ class Pfurl():
         # pudb.set_trace()
 
         if not d_pull['status']:
-            return {'stdout': json.dumps(d_pull['stdout'])}
+            if 'stdout' in d_pull:
+                return {'stdout': json.dumps(d_pull['stdout'])}
+            else:
+                raise Exception(d_pull['msg'])
 
         str_localStem       = os.path.split(self.remoteLocation_resolveSimple(d_remote)['path'])[-1]
         str_fileSuffix      = ""
@@ -805,7 +808,7 @@ class Pfurl():
             str_response        = response.getvalue().decode()
         except Exception as e:
             str_exception   = str(e)
-            self.qprint('Execption trapped: %s' % str_exception)
+            self.qprint('Exception trapped: %s' % str_exception)
             str_response    = str_exception
         c.close()
 

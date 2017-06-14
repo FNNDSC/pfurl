@@ -518,7 +518,10 @@ class Pfurl():
             d_meta              = d_msg['meta']
             str_query           = '?%s' % urllib.parse.urlencode(d_msg)
 
-        str_URL = "http://%s:%s%s%s" % (str_ip, str_port, self.str_URL, str_query)
+        if str_port == '':
+            str_URL = "http://%s%s%s" % (str_ip, self.str_URL, str_query)
+        else:
+            str_URL = "http://%s:%s%s%s" % (str_ip, str_port, self.str_URL, str_query)
 
         self.qprint(str_URL,
                     comms  = 'tx')
@@ -771,7 +774,12 @@ class Pfurl():
         c = pycurl.Curl()
         c.setopt(c.POST, 1)
         # c.setopt(c.URL, "http://%s:%s/api/v1/cmd/" % (str_ip, str_port))
-        c.setopt(c.URL, "http://%s:%s%s" % (str_ip, str_port, self.str_URL))
+        
+        if str_port == '':
+            c.setopt(c.URL, "http://%s%s" % (str_ip, self.str_URL))
+        else:
+            c.setopt(c.URL, "http://%s:%s%s" % (str_ip, str_port, self.str_URL))
+
         if str_fileToProcess:
             self.qprint("Building form-based multi-part message...", comms = 'status')
             fread               = open(str_fileToProcess, "rb")
@@ -1115,11 +1123,15 @@ class Pfurl():
         # Split http string into IP:port and URL
         str_IPport          = self.str_http.split('/')[0]
         self.str_URL        = '/' + '/'.join(self.str_http.split('/')[1:])
-        try:
-            (self.str_ip, self.str_port) = str_IPport.split(':')
-        except:
-            self.str_ip     = str_IPport.split(':')
-            self.str_port   = args.str_port
+        if ':' in str_IPport:
+            try:
+                (self.str_ip, self.str_port) = str_IPport.split(':')
+            except:
+                self.str_ip     = str_IPport.split(':')
+                self.str_port   = args.str_port
+        else:
+            self.str_ip   = str_IPport
+            self.str_port = ''
 
     def httpResponse_bodyParse(self, **kwargs):
         """

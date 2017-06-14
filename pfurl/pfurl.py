@@ -165,6 +165,82 @@ class Pfurl():
 
             self.col2_print("Will transmit to",     '%s://%s:%s' % (self.str_protocol, self.str_ip, self.str_port))
 
+    def storage_resolveBasedOnKey(self, *args, **kwargs):
+        """
+        Call the remote service and ask for the storage location based on the key.
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        global Gd_internalvar
+
+        d_msg       = {
+            'action':   'internalctl',
+            'meta': {
+                'var':      'key2address',
+                'compute':  '<key>'
+            }
+        }
+
+        str_key     = ""
+        b_status    = False
+
+        for k,v in kwargs.items():
+            if k == 'key':  str_key = v
+        d_msg['meta']['key']    = str_key
+
+        # pudb.set_trace()
+        d_ret = self.pullPath_core(d_msg = d_msg)
+
+        return {
+            'status':   b_status,
+            'path':     str_internalLocation
+        }
+
+    def remoteLocation_resolveSimple(self, d_remote):
+        """
+        Resolve the remote "path" location by returning either the
+        'path' or 'key' parameter in the 'remote' JSON record.
+
+        :param d_remote:
+        :return:
+        """
+        b_status        = False
+        str_remotePath  = ""
+        if 'path' in d_remote.keys():
+            str_remotePath  = d_remote['path']
+            b_status        = True
+        if 'key' in d_remote.keys():
+            str_remotePath  = d_remote['key']
+            b_status        = True
+        return {
+            'status':   b_status,
+            'path':     str_remotePath
+        }
+
+
+    def remoteLocation_resolve(self, d_remote):
+        """
+        Resolve the remote path location
+
+        :param d_remote: the "remote" specification
+        :return: a string representation of the remote path
+        """
+        b_status        = False
+        str_remotePath  = ""
+        if 'path' in d_remote.keys():
+            str_remotePath  = d_remote['path']
+            b_status        = True
+        if 'key' in d_remote.keys():
+            d_ret =  self.storage_resolveBasedOnKey(key = d_remote['key'])
+            if d_ret['status']:
+                b_status        = True
+                str_remotePath  = d_ret['path']
+        return {
+            'status':   b_status,
+            'path':     str_remotePath
+        }
 
     def man(self, **kwargs):
         """
@@ -467,12 +543,16 @@ class Pfurl():
 
         return str_response
 
-    def pullPath_core(self, d_msg, **kwargs):
+    def pullPath_core(self, **kwargs):
         """
         Just the core of the pycurl logic.
         """
 
-        str_response = self.pull_core(msg = self.d_msg)
+        d_msg       = self.d_msg
+        for k,v in kwargs.items():
+            if k == 'd_msg':    d_msg   = v
+
+        str_response = self.pull_core(msg = d_msg)
 
         if len(str_response) < 800:
             # It's possible an error occurred for the response to be so short.
@@ -480,7 +560,10 @@ class Pfurl():
             b_response      = False
             b_status        = False
             try:
-                d_response  = json.loads(str_response)
+                if self.b_httpResponseBodyParse:
+                    d_response  = json.loads(self.httpResponse_bodyParse(response = str_response))
+                else:
+                    d_response  = str_response
                 b_response  = True
                 b_status    = d_response['status']
                 str_error   = d_response
@@ -525,21 +608,24 @@ class Pfurl():
         d_remote                = d_meta['remote']
         d_transport             = d_meta['transport']
         d_compress              = d_transport['compress']
-        d_ret                   = {}
-        d_ret['remoteServer']   = {}
-        d_ret['localOp']        = {}
+        d_ret                   = {
+                                    'remoteServer': {},
+                                    'localOp': {}
+                                  }
 
         if 'cleanup' in d_compress:
             b_cleanZip      = d_compress['cleanup']
 
         # Pull the actual data into a dictionary holder
-        d_pull                  = self.pullPath_core(d_msg)
+        d_pull                  = self.pullPath_core()
         d_ret['remoteServer']   = d_pull
+
+        # pudb.set_trace()
 
         if not d_pull['status']:
             return {'stdout': json.dumps(d_pull['stdout'])}
 
-        str_localStem       = os.path.split(d_remote['path'])[-1]
+        str_localStem       = os.path.split(self.remoteLocation_resolveSimple(d_remote)['path'])[-1]
         str_fileSuffix      = ""
         if d_compress['archive']     == "zip":       str_fileSuffix   = ".zip"
 
@@ -604,7 +690,7 @@ class Pfurl():
 
         # Pull the actual data into a dictionary holder
         d_curl                      = {}
-        d_curl['remoteServer']      = self.pullPath_core(d_msg)
+        d_curl['remoteServer']      = self.pullPath_core()
         d_curl['copy']              = {}
         d_curl['copy']['status']    = d_curl['remoteServer']['status']
         if not d_curl['copy']['status']:
@@ -620,7 +706,7 @@ class Pfurl():
         """
 
         # Pull the actual data into a dictionary holder
-        d_pull = self.pullPath_core(d_msg)
+        d_pull = self.pullPath_core()
         return d_pull
 
     def path_localLocationCheck(self, d_msg, **kwargs):
@@ -726,7 +812,10 @@ class Pfurl():
         self.qprint('response from call = %s' % str_response, comms = 'status')
         if self.b_raw:
             try:
-                d_ret           = json.loads(str_response)
+                if self.b_httpResponseBodyParse:
+                    d_ret  = json.loads(self.httpResponse_bodyParse(response = str_response))
+                else:
+                    d_ret   = json.loads(str_response)
             except:
                 d_ret           = str_response
         else:
@@ -800,11 +889,11 @@ class Pfurl():
             str_archive     = d_compress['archive']
             str_encoding    = d_compress['encoding']
 
-        str_remotePath      = d_remote['path']
+        # pudb.set_trace()
+        str_remotePath      = self.remoteLocation_resolveSimple(d_remote)['path']
 
         if 'cleanup' in d_compress:
             b_cleanZip      = d_compress['cleanup']
-
 
         str_fileToProcess   = str_localPath
         str_zipFile         = ""
@@ -819,8 +908,7 @@ class Pfurl():
             b_zip           = True
             str_archive     = 'zip'
 
-        d_ret               = {}
-        d_ret['local']      = {}
+        d_ret               = {'local': {}}
         # If specified (or if the target is a directory), create zip archive
         # of the local path
         if b_zip:
@@ -882,9 +970,10 @@ class Pfurl():
         d_copy              = d_transport['copy']
 
         # Pull the actual data into a dictionary holder
-        d_curl                      = {}
-        d_curl['remoteServer']      = self.push_core(d_msg)
-        d_curl['copy']              = {}
+        d_curl                      = {
+                                        'remoteServer': self.push_core(d_msg),
+                                        'copy': {}
+                                       }
         d_curl['copy']['status']    = d_curl['remoteServer']['status']
         if not d_curl['copy']['status']:
             d_curl['copy']['msg']   = "Copy on remote server failed!"
@@ -911,6 +1000,7 @@ class Pfurl():
         for k,v, in kwargs.items():
             if k == 'action':   str_action  = v
 
+        # pudb.set_trace()
         # First check on the paths, both local and remote
         self.qprint('Checking local path status...', comms = 'status')
         d_ret['localCheck'] = self.path_localLocationCheck(d_msg)
@@ -928,7 +1018,8 @@ class Pfurl():
         if b_OK:
             d_transport['checkRemote']  = True
             self.qprint('Checking remote path status...', comms = 'status')
-            d_ret['remoteCheck']   = self.path_remoteLocationCheck(d_msg)
+            remoteCheck = self.path_remoteLocationCheck(d_msg)
+            d_ret['remoteCheck']    = remoteCheck
             self.qprint(str(d_ret), comms = 'rx')
             if not d_ret['remoteCheck']['status']:
                 self.qprint('An error occurred while checking the remote server.',

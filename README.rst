@@ -1,5 +1,5 @@
 ##############
-pfurl - v1.2.1
+pfurl - v1.2.2
 ##############
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -22,7 +22,7 @@ This repository provides a curl-like client tool that is also able to perform si
 - ``pfurl``: a tool to transfer data using HTTP (similar to ``curl``);
 
 pfurl
-====
+=====
 
 A client application called ``pfurl`` is provided that can be used to speak to both ``pman`` and ``pfioh``.
 

@@ -1,5 +1,5 @@
 ##############
-pfurl - v1.2.2
+pfurl - v1.2.3
 ##############
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -129,9 +129,9 @@ Usage
 For usage of ``pfurl``, consult the relevant wiki pages.
 
 ``pfurl`` usage
-==============
+===============
 
-For ``purl`` detailed information, see the `purl wiki page <https://github.com/FNNDSC/pman/wiki/purl-overview>`_.
+For ``pfurl`` detailed information, see the `pfurl wiki page <https://github.com/FNNDSC/pman/wiki/purl-overview>`_.
 
 
 

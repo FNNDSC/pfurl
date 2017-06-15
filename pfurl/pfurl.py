@@ -18,8 +18,7 @@ import  datetime
 import  zipfile
 import  uuid
 import  base64
-
-import  webob
+import  yaml
 
 # import  codecs
 
@@ -218,7 +217,6 @@ class Pfurl():
             'status':   b_status,
             'path':     str_remotePath
         }
-
 
     def remoteLocation_resolve(self, d_remote):
         """
@@ -609,8 +607,8 @@ class Pfurl():
         d_transport             = d_meta['transport']
         d_compress              = d_transport['compress']
         d_ret                   = {
-                                    'remoteServer': {},
-                                    'localOp': {}
+                                    'remoteServer':     {},
+                                    'localOp':          {}
                                   }
 
         if 'cleanup' in d_compress:
@@ -1134,6 +1132,8 @@ class Pfurl():
             if k == 'response': str_response    = v
         try:
             str_body        = str_response.split('\r\n\r\n')[1]
+            d_body          = yaml.load(str_body)
+            str_body        = json.dumps(d_body)
         except:
             str_body        = str_response
         return str_body
@@ -1164,18 +1164,13 @@ class Pfurl():
                     d_ret = self.pull_core(msg = self.d_msg)
                 if self.str_verb == 'POST':
                     d_ret = self.push_core(self.d_msg)
-            if not self.b_httpResponseBodyParse:
-                str_stdout  = json.dumps(d_ret)
-            else:
-                str_stdout  = '%s' % d_ret
+            str_stdout      = json.dumps(d_ret)
         else:
             d_ret = self.pull_core()
             str_stdout  = '%s' % d_ret
 
         if not self.b_quiet: print(Colors.CYAN)
-        if self.b_httpResponseBodyParse:
-            str_stdout = self.httpResponse_bodyParse(response = str_stdout)
-        return(str_stdout)
+        return str_stdout
 
 def zipdir(path, ziph, **kwargs):
     """

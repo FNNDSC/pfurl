@@ -1249,7 +1249,8 @@ def zip_process(**kwargs):
         'status':           True,
         'path':             str_localPath,
         'zipmode':          str_mode,
-        'filesize':         "{:,}".format(os.stat(str_zipFileName).st_size)
+        'filesize':         "{:,}".format(os.stat(str_zipFileName).st_size),
+        'timestamp':        '%s' % datetime.datetime.now()
     }
 
 

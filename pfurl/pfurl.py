@@ -1111,13 +1111,13 @@ class Pfurl():
             if k == 'http':     self.str_http   = v
 
         # Split http string into IP:port and URL
-        str_IPport          = self.str_http.split('/')[0]
-        self.str_URL        = '/' + '/'.join(self.str_http.split('/')[1:])
-        try:
-            (self.str_ip, self.str_port) = str_IPport.split(':')
-        except:
-            self.str_ip     = str_IPport.split(':')
-            self.str_port   = args.str_port
+        path_split_url = self.str_http.split('/')
+        str_IPport          = path_split_url[0]
+        self.str_URL        = '/' + '/'.join(path_split_url[1:])
+        host_port_pair = str_IPport.split(':')
+        self.str_ip = host_port_pair[0]
+        if len(host_port_pair) > 1:
+            self.str_port = host_port_pair[1]
 
     def httpResponse_bodyParse(self, **kwargs):
         """

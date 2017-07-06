@@ -1027,7 +1027,7 @@ class Pfurl():
             d_ret['remoteCheck']    = remoteCheck
             self.qprint(str(d_ret), comms = 'rx')
             if not d_ret['remoteCheck']['status']:
-                self.qprint('An error occurred while checking the remote server.',
+                self.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
                             comms = 'error')
                 d_ret['remoteCheck']['msg']     = "The remote path spec is invalid!"
                 b_OK        = False

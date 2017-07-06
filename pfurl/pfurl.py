@@ -944,13 +944,17 @@ class Pfurl():
                                                     fileToPush  = str_fileToProcess,
                                                     encoding    = str_encoding)
                                                     # d_ret       = d_ret)
-        d_ret['status'] = d_ret['remoteServer']['status']
-        d_ret['msg']    = d_ret['remoteServer']['msg']
 
         if b_cleanZip:
             self.qprint("Removing temp files...", comms = 'status')
             if os.path.isfile(str_zipFile):     os.remove(str_zipFile)
             if os.path.isfile(str_base64File):  os.remove(str_base64File)
+
+        if 'status' in d_ret['remoteServer']:
+            d_ret['status'] = d_ret['remoteServer']['status']
+            d_ret['msg']    = d_ret['remoteServer']['msg']
+        else:
+            raise Exception('Invalid Response')
 
         return d_ret
 

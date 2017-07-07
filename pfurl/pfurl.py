@@ -19,6 +19,7 @@ import  zipfile
 import  uuid
 import  base64
 import  yaml
+import  shutil
 
 # import  codecs
 
@@ -610,7 +611,6 @@ class Pfurl():
                                     'remoteServer':     {},
                                     'localOp':          {}
                                   }
-
         if 'cleanup' in d_compress:
             b_cleanZip      = d_compress['cleanup']
 
@@ -630,7 +630,9 @@ class Pfurl():
         str_fileSuffix      = ""
         if d_compress['archive']     == "zip":       str_fileSuffix   = ".zip"
 
+        str_localParent, str_localTarget = os.path.split(str_localPath)
         str_localFile       = "%s/%s%s" % (d_meta['local']['path'], str_localStem, str_fileSuffix)
+        str_localFile       = "%s/%s%s" % (str_localParent, str_localStem, str_fileSuffix)
         str_response        = d_pull['response']
         d_pull['response']  = '<truncated>'
 
@@ -649,6 +651,10 @@ class Pfurl():
             with open(str_localFile, 'wb') as fh:
                 fh.write(str_response)
                 fh.close()
+            self.qprint("Checking zip file %s...")
+            with zipfile.ZipFile(str_localFile, 'r') as f:
+                l_names = f.namelist()
+            str_unpackTopDir    = (l_names[0]).split(os.path.sep)[0]
             d_ret['localOp']['stream']                  = {}
             d_ret['localOp']['stream']['status']        = True
             d_ret['localOp']['stream']['fileWritten']   = str_localFile
@@ -658,10 +664,11 @@ class Pfurl():
         if d_compress['archive'] == 'zip':
             self.qprint("Unzipping %s to %s"  % (str_localFile, str_localPath),
                         comms = 'status')
+            # pudb.set_trace()
             d_fio = zip_process(
                 action          = "unzip",
                 payloadFile     = str_localFile,
-                path            = str_localPath
+                path            = str_localParent
             )
             d_ret['localOp']['unzip']       = d_fio
             d_ret['localOp']['unzip']['timestamp']  = '%s' % datetime.datetime.now()
@@ -669,6 +676,9 @@ class Pfurl():
             d_ret['status']                 = d_fio['status']
             d_ret['msg']                    = d_fio['msg']
 
+        shutil.move(os.path.join(str_localParent,   str_unpackTopDir), 
+                    os.path.join(str_localParent,   str_localTarget))
+        
         if b_cleanZip and d_ret['status']:
             self.qprint("Removing zip file %s..." % str_localFile,
                         comms = 'status')
@@ -718,14 +728,15 @@ class Pfurl():
         :param kwargs:
         :return:
         """
-        d_meta              = d_msg['meta']
-        d_local             = d_meta['local']
+        d_meta                      = d_msg['meta']
+        d_local                     = d_meta['local']
 
-        str_localPath       = d_local['path']
+        str_localPathFull           = d_local['path']
+        str_localPath, str_unpack   = os.path.split(str_localPathFull)
 
-        b_isFile            = os.path.isfile(str_localPath)
-        b_isDir             = os.path.isdir(str_localPath)
-        b_exists            = os.path.exists(str_localPath)
+        b_isFile                    = os.path.isfile(str_localPath)
+        b_isDir                     = os.path.isdir(str_localPath)
+        b_exists                    = os.path.exists(str_localPath)
 
         d_ret               = {
             'status':  b_exists,

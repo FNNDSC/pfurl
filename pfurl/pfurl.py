@@ -651,10 +651,11 @@ class Pfurl():
             with open(str_localFile, 'wb') as fh:
                 fh.write(str_response)
                 fh.close()
-            self.qprint("Checking zip file %s...")
+            self.qprint("Checking zip file %s..." % str_localFile)
             with zipfile.ZipFile(str_localFile, 'r') as f:
                 l_names = f.namelist()
             str_unpackTopDir    = (l_names[0]).split(os.path.sep)[0]
+            self.qprint("will unpack %s..." % str_unpackTopDir)
             d_ret['localOp']['stream']                  = {}
             d_ret['localOp']['stream']['status']        = True
             d_ret['localOp']['stream']['fileWritten']   = str_localFile
@@ -676,6 +677,10 @@ class Pfurl():
             d_ret['status']                 = d_fio['status']
             d_ret['msg']                    = d_fio['msg']
 
+        self.qprint("Moving %s to %s..." % \
+                    (os.path.join(str_localParent,   str_unpackTopDir), 
+                    os.path.join(str_localParent,   str_localTarget))        
+        )
         shutil.move(os.path.join(str_localParent,   str_unpackTopDir), 
                     os.path.join(str_localParent,   str_localTarget))
         

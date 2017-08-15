@@ -20,6 +20,7 @@ import  uuid
 import  base64
 import  yaml
 import  shutil
+import  inspect
 
 # import  codecs
 
@@ -50,6 +51,8 @@ class Pfurl():
 
         # pudb.set_trace()
 
+        str_caller  = inspect.stack()[1][3]
+
         if not self.b_quiet:
             if not self.b_useDebug:
                 if str_comms == 'status':   write(Colors.PURPLE,    end="")
@@ -57,7 +60,7 @@ class Pfurl():
                 if str_comms == "tx":       write(Colors.YELLOW + "---->")
                 if str_comms == "rx":       write(Colors.GREEN  + "<----")
                 write('%s' % datetime.datetime.now() + " ",       end="")
-            write(' | ' + msg)
+            write(' | ' + self.__name__ + "." + str_caller + '() | ' + msg)
             if not self.b_useDebug:
                 if str_comms == "tx":       write(Colors.YELLOW + "---->")
                 if str_comms == "rx":       write(Colors.GREEN  + "<----")
@@ -74,7 +77,7 @@ class Pfurl():
 
         self._log                       = Message()
         self._log._b_syslog             = True
-        self.__name                     = "Pfurl"
+        self.__name__                   = "Pfurl"
         self.b_useDebug                 = False
         self._startFromCLI              = False
 

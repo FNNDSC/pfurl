@@ -21,6 +21,7 @@ import  base64
 import  yaml
 import  shutil
 import  inspect
+import  glob
 
 # import  codecs
 
@@ -60,7 +61,7 @@ class Pfurl():
                 if str_comms == "tx":       write(Colors.YELLOW + "---->")
                 if str_comms == "rx":       write(Colors.GREEN  + "<----")
                 write('%s' % datetime.datetime.now() + " ",       end="")
-            write(' | ' + self.__name__ + "." + str_caller + '() | ' + msg)
+            write(' | ' + os.path.basename(__file__) + ':' +  self.__name__ + "." + str_caller + '() | ' + msg)
             if not self.b_useDebug:
                 if str_comms == "tx":       write(Colors.YELLOW + "---->")
                 if str_comms == "rx":       write(Colors.GREEN  + "<----")
@@ -601,6 +602,19 @@ class Pfurl():
 
         This pulls a compressed path from a remote host/location.
 
+        Zip archives are univerally unpacked to
+
+            /tmp/unpack-<uuid.uuid4()>
+
+        and then the file contents are moved to the actual destination 
+        directory. In shell, this would be:
+
+            mkdir /tmp/unpack-<uuid.uuid4()>
+            cp file.zip /tmp/unpack-<uuid.uuid4()>
+            unzip /tmp/unpack-<uuid.uuid4()>/file.zip
+            mv /tmp/unpack-<uuid.uuid4()>/* <destination>
+            rm -fr /tmp/unpack-<uuid.uuid4()>
+
         """
 
         # Parse "header" information
@@ -614,12 +628,28 @@ class Pfurl():
                                     'remoteServer':     {},
                                     'localOp':          {}
                                   }
+
+        # Unpack dir stuff...
+        str_uuid                = uuid.uuid4()
+        str_unpackDir           = '/tmp/unpack-%s' % str_uuid
+        if not os.path.isdir(str_unpackDir):
+            os.makedirs(str_unpackDir)
+        else:
+            shutil.rmtree(str_unpackDir)
+            os.makedirs(str_unpackDir)
+
+        # Check on destination path...
+        if not os.path.isdir(str_localPath):
+            os.makedirs(str_localPath)
+
         if 'cleanup' in d_compress:
-            b_cleanZip      = d_compress['cleanup']
+            b_cleanZip          = d_compress['cleanup']
 
         # Pull the actual data into a dictionary holder
         d_pull                  = self.pullPath_core()
         d_ret['remoteServer']   = d_pull
+        str_response        = d_pull['response']
+        d_pull['response']  = '<truncated>'
 
         # pudb.set_trace()
 
@@ -629,15 +659,17 @@ class Pfurl():
             else:
                 raise Exception(d_pull['msg'])
 
+
         str_localStem       = os.path.split(self.remoteLocation_resolveSimple(d_remote)['path'])[-1]
         str_fileSuffix      = ""
         if d_compress['archive']     == "zip":       str_fileSuffix   = ".zip"
+        str_localFile       = '%s/%s' % (str_unpackDir, str_uuid) + str_fileSuffix
 
-        str_localParent, str_localTarget = os.path.split(str_localPath)
-        str_localFile       = "%s/%s%s" % (d_meta['local']['path'], str_localStem, str_fileSuffix)
-        str_localFile       = "%s/%s%s" % (str_localParent, str_localStem, str_fileSuffix)
-        str_response        = d_pull['response']
-        d_pull['response']  = '<truncated>'
+        # str_localParent, str_localTarget = os.path.split(str_localPath)
+        # str_unpackTopDir    = str_localParent
+        # str_localFile       = "%s/%s%s" % (d_meta['local']['path'], str_localStem, str_fileSuffix)
+
+        # str_localFile       = "%s/%s%s" % (str_localParent, str_localStem, str_fileSuffix)
 
         if d_compress['encoding'] == 'base64':
             self.qprint("Decoding base64 encoded text stream to %s..." % \
@@ -647,18 +679,20 @@ class Pfurl():
                 payloadBytes    = str_response,
                 saveToFile      = str_localFile
             )
-            d_ret['localOp']['decode']   = d_fio
+            d_ret['localOp']['decode']      = d_fio
+            d_ret['status']                 = d_fio['status']
+            d_ret['msg']                    = d_fio['msg']
         else:
             self.qprint("Writing byte stream to %s..." % str_localFile,
                         comms = 'status')
             with open(str_localFile, 'wb') as fh:
                 fh.write(str_response)
                 fh.close()
-            self.qprint("Checking zip file %s..." % str_localFile)
-            with zipfile.ZipFile(str_localFile, 'r') as f:
-                l_names = f.namelist()
-            str_unpackTopDir    = (l_names[0]).split(os.path.sep)[0]
-            self.qprint("will unpack %s..." % str_unpackTopDir)
+            # self.qprint("Checking zip file %s..." % str_localFile)
+            # with zipfile.ZipFile(str_localFile, 'r') as f:
+            #     l_names = f.namelist()
+            # str_unpackTopDir    = (l_names[0]).split(os.path.sep)[0]
+            # self.qprint("will unpack %s..." % str_unpackTopDir)
             d_ret['localOp']['stream']                  = {}
             d_ret['localOp']['stream']['status']        = True
             d_ret['localOp']['stream']['fileWritten']   = str_localFile
@@ -666,13 +700,13 @@ class Pfurl():
             d_ret['localOp']['stream']['filesize']      = "{:,}".format(len(str_response))
 
         if d_compress['archive'] == 'zip':
-            self.qprint("Unzipping %s to %s"  % (str_localFile, str_localPath),
+            self.qprint("Unzipping %s to %s"  % (str_localFile, str_unpackDir),
                         comms = 'status')
             # pudb.set_trace()
             d_fio = zip_process(
                 action          = "unzip",
                 payloadFile     = str_localFile,
-                path            = str_localParent
+                path            = str_unpackDir
             )
             d_ret['localOp']['unzip']       = d_fio
             d_ret['localOp']['unzip']['timestamp']  = '%s' % datetime.datetime.now()
@@ -680,18 +714,27 @@ class Pfurl():
             d_ret['status']                 = d_fio['status']
             d_ret['msg']                    = d_fio['msg']
 
-        self.qprint("Moving %s to %s..." % \
-                    (os.path.join(str_localParent,   str_unpackTopDir), 
-                    os.path.join(str_localParent,   str_localTarget))        
-        )
-        shutil.move(os.path.join(str_localParent,   str_unpackTopDir), 
-                    os.path.join(str_localParent,   str_localTarget))
-        
-        if b_cleanZip and d_ret['status']:
-            self.qprint("Removing zip file %s..." % str_localFile,
-                        comms = 'status')
+            self.qprint('Removing zip file %s' % str_localFile)
             os.remove(str_localFile)
+            self.qprint('Moving all files in %s to %s' % (str_unpackDir, str_localPath))
+            for str_file in glob.glob(str_unpackDir + '/*'):
+                shutil.move(str_file, str_localPath)
+            self.qprint('Removing unpack dir %s' % str_unpackDir)
+            shutil.rmtree(str_unpackDir)
 
+            # self.qprint("Moving %s to %s..." % \
+            #             (os.path.join(str_localParent,  str_unpackTopDir), 
+            #             os.path.join(str_localParent,   str_localTarget))        
+            # )
+            # shutil.move(os.path.join(str_localParent,   str_unpackTopDir), 
+            #             os.path.join(str_localParent,   str_localTarget))
+        
+            # if b_cleanZip and d_ret['status']:
+            #     self.qprint("Removing zip file %s..." % str_localFile,
+            #                 comms = 'status')
+            #     os.remove(str_localFile)
+
+        self.qprint('Returning: %s' % d_ret)
         return d_ret
 
     def pullPath_copy(self, d_msg, **kwargs):
@@ -947,15 +990,15 @@ class Pfurl():
         # Encode possible binary filedata in base64 suitable for text-only
         # transmission.
         if str_encoding     == 'base64':
-            self.qprint("base64 encoding target...", comms = 'status')
+            self.qprint("base64 encoding target... %s" % str_fileToProcess + ".b64" , comms = 'status')
             d_fio   = base64_process(
                 action      = 'encode',
                 payloadFile = str_fileToProcess,
-                saveToFile  = str_fileToProcess + ".b64"
+                saveToFile  = os.path.basename(str_fileToProcess) + ".b64"
             )
             str_fileToProcess       = d_fio['fileProcessed']
             self.qprint("base64 encoded to %s..." % str_fileToProcess, comms = 'status')
-            str_base64File          = str_fileToProcess
+            str_base64File          = os.path.basename(str_fileToProcess)
             d_ret['local']['encoding']                   = d_fio
 
         # Push the actual file -- note the d_ret!
@@ -966,14 +1009,19 @@ class Pfurl():
 
         if b_cleanZip:
             self.qprint("Removing temp files...", comms = 'status')
+            self.qprint("zipFile    = %s" % str_zipFile)
+            self.qprint("base64File = %s" % str_base64File)
             if os.path.isfile(str_zipFile):     os.remove(str_zipFile)
             if os.path.isfile(str_base64File):  os.remove(str_base64File)
 
+        self.qprint('%s' % d_ret)
         if 'status' in d_ret['remoteServer']:
             d_ret['status'] = d_ret['remoteServer']['status']
             d_ret['msg']    = d_ret['remoteServer']['msg']
         else:
-            raise Exception('Invalid Response')
+            d_ret['status'] = d_ret['remoteServer']['decode']['status']
+            d_ret['msg']    = d_ret['remoteServer']['decode']['msg']
+            # raise Exception('Invalid Response')
 
         return d_ret
 
@@ -1049,7 +1097,7 @@ class Pfurl():
                 self.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
                             comms = 'error')
                 d_ret['remoteCheck']['msg']     = "The remote path spec is invalid!"
-                b_OK        = False
+                b_OK                            = False
             else:
                 d_ret['remoteCheck']['msg']     = "Check on remote path successful."
             d_transport['checkRemote']  = False

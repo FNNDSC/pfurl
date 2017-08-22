@@ -648,11 +648,10 @@ class Pfurl():
         # Pull the actual data into a dictionary holder
         d_pull                  = self.pullPath_core()
         d_ret['remoteServer']   = d_pull
-        str_response        = d_pull['response']
-        d_pull['response']  = '<truncated>'
+        str_response            = d_pull['response']
+        d_pull['response']      = '<truncated>'
 
         # pudb.set_trace()
-
         if not d_pull['status']:
             if 'stdout' in d_pull:
                 return {'stdout': json.dumps(d_pull['stdout'])}
@@ -664,12 +663,6 @@ class Pfurl():
         str_fileSuffix      = ""
         if d_compress['archive']     == "zip":       str_fileSuffix   = ".zip"
         str_localFile       = '%s/%s' % (str_unpackDir, str_uuid) + str_fileSuffix
-
-        # str_localParent, str_localTarget = os.path.split(str_localPath)
-        # str_unpackTopDir    = str_localParent
-        # str_localFile       = "%s/%s%s" % (d_meta['local']['path'], str_localStem, str_fileSuffix)
-
-        # str_localFile       = "%s/%s%s" % (str_localParent, str_localStem, str_fileSuffix)
 
         if d_compress['encoding'] == 'base64':
             self.qprint("Decoding base64 encoded text stream to %s..." % \
@@ -688,51 +681,65 @@ class Pfurl():
             with open(str_localFile, 'wb') as fh:
                 fh.write(str_response)
                 fh.close()
-            # self.qprint("Checking zip file %s..." % str_localFile)
-            # with zipfile.ZipFile(str_localFile, 'r') as f:
-            #     l_names = f.namelist()
-            # str_unpackTopDir    = (l_names[0]).split(os.path.sep)[0]
-            # self.qprint("will unpack %s..." % str_unpackTopDir)
             d_ret['localOp']['stream']                  = {}
             d_ret['localOp']['stream']['status']        = True
             d_ret['localOp']['stream']['fileWritten']   = str_localFile
             d_ret['localOp']['stream']['timestamp']     = '%s' % datetime.datetime.now()
             d_ret['localOp']['stream']['filesize']      = "{:,}".format(len(str_response))
+            d_ret['status']                             = True
+            d_ret['msg']                                = 'Write successful.'
 
         if d_compress['archive'] == 'zip':
             self.qprint("Unzipping %s to %s"  % (str_localFile, str_unpackDir),
                         comms = 'status')
-            # pudb.set_trace()
             d_fio = zip_process(
                 action          = "unzip",
                 payloadFile     = str_localFile,
                 path            = str_unpackDir
             )
-            d_ret['localOp']['unzip']       = d_fio
-            d_ret['localOp']['unzip']['timestamp']  = '%s' % datetime.datetime.now()
-            d_ret['localOp']['unzip']['filesize']   = '%s' % "{:,}".format(os.stat(d_fio['fileProcessed']).st_size)
-            d_ret['status']                 = d_fio['status']
-            d_ret['msg']                    = d_fio['msg']
-
+            d_ret['localOp']['unzip']                   = d_fio
+            d_ret['localOp']['unzip']['timestamp']      = '%s' % datetime.datetime.now()
+            d_ret['localOp']['unzip']['filesize']       = '%s' % "{:,}".format(os.stat(d_fio['fileProcessed']).st_size)
+            d_ret['status']                             = d_fio['status']
+            d_ret['msg']                                = d_fio['msg']
             self.qprint('Removing zip file %s' % str_localFile)
             os.remove(str_localFile)
-            self.qprint('Moving all files in %s to %s' % (str_unpackDir, str_localPath))
-            for str_file in glob.glob(str_unpackDir + '/*'):
-                shutil.move(str_file, str_localPath)
-            self.qprint('Removing unpack dir %s' % str_unpackDir)
-            shutil.rmtree(str_unpackDir)
 
-            # self.qprint("Moving %s to %s..." % \
-            #             (os.path.join(str_localParent,  str_unpackTopDir), 
-            #             os.path.join(str_localParent,   str_localTarget))        
-            # )
-            # shutil.move(os.path.join(str_localParent,   str_unpackTopDir), 
-            #             os.path.join(str_localParent,   str_localTarget))
-        
-            # if b_cleanZip and d_ret['status']:
-            #     self.qprint("Removing zip file %s..." % str_localFile,
-            #                 comms = 'status')
-            #     os.remove(str_localFile)
+        d_ret['localOp']['move']    = {}
+        # Handle case when a single has been sent w/o zipping
+        if not d_compress['archive'] == 'zip':
+            str_remotePath, str_remoteFile  = os.path.split(d_remote['path'])
+            self.qprint('Moving single file %s to %s...' % (str_localFile, 
+                                                            os.path.join(str_unpackDir, str_remoteFile)))
+            shutil.move(str_localFile, os.path.join(str_unpackDir, str_remoteFile))
+            d_ret['localOp']['move']    = {
+                'status':   True,
+                'msg':      'Single file move successful.'
+            }
+            d_ret['status']                             = d_ret['localOp']['move']['status']
+            d_ret['msg']                                = d_ret['localOp']['move']['msg']
+
+        # Move file(s) to target dir
+        self.qprint('Moving all files in %s to %s' % (str_unpackDir, str_localPath))
+        for str_file in glob.glob(str_unpackDir + '/*'):
+            try:
+                shutil.move(str_file, str_localPath)
+                d_ret['localOp']['move']['status']  = True
+                d_ret['localOp']['move']['msg']     = 'Multiple file move successful.'
+                d_ret['status']                     = d_ret['localOp']['move']['status']
+                d_ret['msg']                        = d_ret['localOp']['move']['msg']
+            except:
+                self.qprint('An error occured in moving. Target might already exist.', 
+                                comms = 'error')
+                d_ret['localOp']['move']['status']  = False
+                d_ret['localOp']['move']['msg']     = 'Multiple file move unsuccessful. Target exists!'
+                d_ret['status']                     = d_ret['localOp']['move']['status']
+                d_ret['msg']                        = d_ret['localOp']['move']['msg']
+                break
+
+        # Clean up        
+        self.qprint('Removing unpack dir %s' % str_unpackDir)
+        shutil.rmtree(str_unpackDir)
 
         self.qprint('Returning: %s' % d_ret)
         return d_ret
@@ -784,6 +791,13 @@ class Pfurl():
 
         str_localPathFull           = d_local['path']
         str_localPath, str_unpack   = os.path.split(str_localPathFull)
+
+        if 'createDir' in d_local.keys():
+            if os.path.isdir(str_localPathFull):
+                self.qprint('Removing local path %s...' % str_localPathFull)
+                shutil.rmtree(str_localPathFull)
+            self.qprint('Creating empty local path %s...' % str_localPathFull)
+            os.makedirs(str_localPathFull)
 
         b_isFile                    = os.path.isfile(str_localPath)
         b_isDir                     = os.path.isdir(str_localPath)
@@ -973,13 +987,19 @@ class Pfurl():
 
         d_ret               = {'local': {}}
         # If specified (or if the target is a directory), create zip archive
-        # of the local path
+        # of the local path's contents (or the target if a file)
         if b_zip:
-            self.qprint("Zipping target...", comms = 'status')
+            self.qprint("Zipping target '%s'..." % str_localPath, comms = 'status')
+            str_dirSuffix   = ""
+            if os.path.isdir(str_localPath):
+                self.qprint("target is a directory", comms = 'status')
+                str_dirSuffix   = '/'
+            else:
+                self.qprint("target is a file", comms = 'status')
             d_fio   = zip_process(
                 action  = 'zip',
                 path    = str_localPath,
-                arcroot = str_localPath
+                arcroot = str_localPath + str_dirSuffix
             )
             if not d_fio['status']: return {'stdout': json.dumps(d_fio)}
             str_fileToProcess   = d_fio['fileProcessed']

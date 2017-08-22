@@ -791,22 +791,43 @@ class Pfurl():
 
         str_localPathFull           = d_local['path']
         str_localPath, str_unpack   = os.path.split(str_localPathFull)
-
-        if 'createDir' in d_local.keys():
-            if os.path.isdir(str_localPathFull):
-                self.qprint('Removing local path %s...' % str_localPathFull)
-                shutil.rmtree(str_localPathFull)
-            self.qprint('Creating empty local path %s...' % str_localPathFull)
-            os.makedirs(str_localPathFull)
+        str_msg                     = ''
 
         b_isFile                    = os.path.isfile(str_localPath)
         b_isDir                     = os.path.isdir(str_localPath)
         b_exists                    = os.path.exists(str_localPath)
 
+        # pudb.set_trace()
+
+        if 'pull' in d_msg['action']:
+            # If we are "pulling" data to local, then we assume the local
+            # directory does not exist. If it does, and if 'createDir' is 'true', 
+            # we remove the localPath and re-create it, thus assuring it will 
+            # only contain the info pulled from the remote source.
+            # If 'writeInExisting' is 'true', then execution continues, but
+            # may fail if the pulled target exists in the localPath.
+            if 'createDir' in d_local.keys():
+                if d_local['createDir']:
+                    if os.path.isdir(str_localPathFull):
+                        self.qprint('Removing local path %s...' % str_localPathFull)
+                        shutil.rmtree(str_localPathFull)
+                        str_msg         = 'Removed existing local path... '
+                    self.qprint('Creating empty local path %s...' % str_localPathFull)
+                    os.makedirs(str_localPathFull)
+                    str_msg += 'Created new local path'
+            else:
+                str_msg = 'local path already exists!'
+                if 'writeInExisting' in d_local.keys():
+                    if not d_local['writeInExisting']: 
+                        if b_isDir: b_exists = False
+                else:
+                    if b_isDir: b_exists = False
+
         d_ret               = {
-            'status':  b_exists,
-            'isfile':  b_isFile,
-            'isdir':   b_isDir
+            'status':   b_exists,
+            'isfile':   b_isFile,
+            'isdir':    b_isDir,
+            'msg':      str_msg
         }
 
         return {'check':        d_ret,
@@ -1099,7 +1120,7 @@ class Pfurl():
         if not d_ret['localCheck']['status']:
             self.qprint('An error occurred while checking on the local path.',
                         comms = 'error')
-            d_ret['localCheck']['msg']          = 'The local path spec is invalid!'
+            d_ret['localCheck']['msg']    = d_ret['localCheck']['check']['msg']
             d_ret['localCheck']['status'] = False
             b_OK            = False
         else:

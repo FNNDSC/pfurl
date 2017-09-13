@@ -543,7 +543,6 @@ class Pfurl():
 
         self.qprint('Incoming transmission received, length = %s' % "{:,}".format(len(str_response)),
                     comms = 'rx')
-
         return str_response
 
     def pullPath_core(self, **kwargs):
@@ -741,7 +740,7 @@ class Pfurl():
         self.qprint('Removing unpack dir %s' % str_unpackDir)
         shutil.rmtree(str_unpackDir)
 
-        self.qprint('Returning: %s' % d_ret)
+        self.qprint("Returning: %s" % self.pp.pformat(d_ret).strip(), comms = 'status')
         return d_ret
 
     def pullPath_copy(self, d_msg, **kwargs):
@@ -852,7 +851,7 @@ class Pfurl():
             if k == 'd_ret':        d_ret               = v
             if k == 'ip':           str_ip              = v
             if k == 'port':         str_port            = v
-            if k == 'verbose':      verbose     = v
+            if k == 'verbose':      verbose             = v
 
         if len(self.str_jsonwrapper):
             str_msg         = json.dumps({self.str_jsonwrapper: d_msg})
@@ -926,7 +925,7 @@ class Pfurl():
             d_ret['msg']        = 'push OK.'
 
         if isinstance(d_ret, object):
-            self.qprint(json.dumps(d_ret), comms = 'rx')
+            self.qprint(json.dumps(d_ret, sort_keys=True, indent=4), comms = 'rx')
         if isinstance(d_ret, str):
             self.qprint(d_ret, comms = 'rx')
 
@@ -953,7 +952,7 @@ class Pfurl():
             if 'ip' in d_remote:    str_ip      = d_remote['ip']
             if 'port' in d_remote:  str_port    = d_remote['port']
 
-        d_ret               = self.push_core(
+        d_ret               = self.push_core(   d_msg,
                                                 fileToPush  = str_fileToProcess,
                                                 encoding    = str_encoding,
                                                 ip          = str_ip,
@@ -1055,7 +1054,7 @@ class Pfurl():
             if os.path.isfile(str_zipFile):     os.remove(str_zipFile)
             if os.path.isfile(str_base64File):  os.remove(str_base64File)
 
-        self.qprint('%s' % d_ret)
+        self.qprint("Returning: %s" % self.pp.pformat(d_ret).strip(), comms = 'status')
         if 'status' in d_ret['remoteServer']:
             d_ret['status'] = d_ret['remoteServer']['status']
             d_ret['msg']    = d_ret['remoteServer']['msg']
@@ -1120,11 +1119,11 @@ class Pfurl():
         if not d_ret['localCheck']['status']:
             self.qprint('An error occurred while checking on the local path.',
                         comms = 'error')
-            d_ret['localCheck']['msg']    = d_ret['localCheck']['check']['msg']
-            d_ret['localCheck']['status'] = False
+            d_ret['localCheck']['msg']      = d_ret['localCheck']['check']['msg']
+            d_ret['localCheck']['status']   = False
             b_OK            = False
         else:
-            d_ret['localCheck']['msg']          = "Check on local path successful."
+            d_ret['localCheck']['msg']      = "Check on local path successful."
         d_ret['status']     = d_ret['localCheck']['status']
         d_ret['msg']        = d_ret['localCheck']['msg']
 
@@ -1133,7 +1132,7 @@ class Pfurl():
             self.qprint('Checking remote path status...', comms = 'status')
             remoteCheck = self.path_remoteLocationCheck(d_msg)
             d_ret['remoteCheck']    = remoteCheck
-            self.qprint(str(d_ret), comms = 'rx')
+            self.qprint("d_ret: %s" % self.pp.pformat(d_ret).strip(), comms = 'rx')
             if not d_ret['remoteCheck']['status']:
                 self.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
                             comms = 'error')

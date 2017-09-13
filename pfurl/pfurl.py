@@ -906,7 +906,10 @@ class Pfurl():
             str_response    = str_exception
         c.close()
 
-        self.qprint('response from call = %s' % str_response, comms = 'status')
+        if isinstance(str_response, dict):
+            self.qprint("Response from call:\n%s" % self.pp.pformat(str_response).strip(), comms = 'status')
+        else:
+            self.qprint('Response from call: %s' % str_response, comms = 'status')
         if self.b_raw:
             try:
                 if self.b_httpResponseBodyParse:

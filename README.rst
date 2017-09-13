@@ -1,5 +1,5 @@
 ##############
-pfurl - v1.3.1
+pfurl - v1.3.2
 ##############
 
 .. image:: https://badge.fury.io/py/pfurl.svg

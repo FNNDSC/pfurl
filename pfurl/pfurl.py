@@ -813,6 +813,7 @@ class Pfurl():
                         str_msg         = 'Removed existing local path... '
                     self.qprint('Creating empty local path %s...' % str_localPathFull)
                     os.makedirs(str_localPathFull)
+                    b_exists = True
                     str_msg += 'Created new local path'
             else:
                 str_msg = 'local path already exists!'

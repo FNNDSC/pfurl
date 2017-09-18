@@ -824,6 +824,7 @@ class Pfurl():
                     if b_isDir: b_exists = False
 
         d_ret               = {
+            'dir':      str_localPath,
             'status':   b_exists,
             'isfile':   b_isFile,
             'isdir':    b_isDir,
@@ -967,6 +968,8 @@ class Pfurl():
     def pushPath_compress(self, d_msg, **kwargs):
         """
         """
+
+        # pudb.set_trace()
 
         d_meta              = d_msg['meta']
         str_meta            = json.dumps(d_meta)
@@ -1136,7 +1139,7 @@ class Pfurl():
             self.qprint('Checking remote path status...', comms = 'status')
             remoteCheck = self.path_remoteLocationCheck(d_msg)
             d_ret['remoteCheck']    = remoteCheck
-            self.qprint("d_ret: %s" % self.pp.pformat(d_ret).strip(), comms = 'rx')
+            self.qprint("d_ret:\n%s" % self.pp.pformat(d_ret).strip(), comms = 'rx')
             if not d_ret['remoteCheck']['status']:
                 self.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
                             comms = 'error')

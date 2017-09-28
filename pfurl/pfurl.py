@@ -797,8 +797,6 @@ class Pfurl():
         b_isDir                     = os.path.isdir(str_localPathFull)
         b_exists                    = os.path.exists(str_localPathFull)
 
-        pudb.set_trace()
-
         if 'pull' in d_msg['action']:
             # If we are "pulling" data to local, then we assume the local
             # directory does not exist. If it does, and if 'createDir' is 'true', 

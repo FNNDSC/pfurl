@@ -791,12 +791,13 @@ class Pfurl():
         str_localPathFull           = d_local['path']
         str_localPath, str_unpack   = os.path.split(str_localPathFull)
         str_msg                     = ''
+        str_checkedDir              = str_localPathFull
 
-        b_isFile                    = os.path.isfile(str_localPath)
-        b_isDir                     = os.path.isdir(str_localPath)
-        b_exists                    = os.path.exists(str_localPath)
+        b_isFile                    = os.path.isfile(str_localPathFull)
+        b_isDir                     = os.path.isdir(str_localPathFull)
+        b_exists                    = os.path.exists(str_localPathFull)
 
-        # pudb.set_trace()
+        pudb.set_trace()
 
         if 'pull' in d_msg['action']:
             # If we are "pulling" data to local, then we assume the local
@@ -805,6 +806,12 @@ class Pfurl():
             # only contain the info pulled from the remote source.
             # If 'writeInExisting' is 'true', then execution continues, but
             # may fail if the pulled target exists in the localPath.
+
+            str_checkedDir              = str_localPath
+            b_isFile                    = os.path.isfile(str_localPath)
+            b_isDir                     = os.path.isdir(str_localPath)
+            b_exists                    = os.path.exists(str_localPath)
+
             if 'createDir' in d_local.keys():
                 if d_local['createDir']:
                     if os.path.isdir(str_localPathFull):
@@ -824,7 +831,8 @@ class Pfurl():
                     if b_isDir: b_exists = False
 
         d_ret               = {
-            'dir':      str_localPath,
+            'action':   d_msg['action'],
+            'dir':      str_checkedDir,
             'status':   b_exists,
             'isfile':   b_isFile,
             'isdir':    b_isDir,
@@ -1128,7 +1136,8 @@ class Pfurl():
                         comms = 'error')
             d_ret['localCheck']['msg']      = d_ret['localCheck']['check']['msg']
             d_ret['localCheck']['status']   = False
-            b_OK            = False
+            b_OK                            = False
+            self.qprint("d_ret:\n%s" % self.pp.pformat(d_ret).strip(), comms = 'error')
         else:
             d_ret['localCheck']['msg']      = "Check on local path successful."
         d_ret['status']     = d_ret['localCheck']['status']

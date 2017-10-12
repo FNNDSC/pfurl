@@ -678,15 +678,22 @@ class Pfurl():
             self.qprint("Writing byte stream to %s..." % str_localFile,
                         comms = 'status')
             with open(str_localFile, 'wb') as fh:
-                fh.write(str_response)
-                fh.close()
+                try:    
+                    fh.write(str_response)
+                    fh.close()
+                    b_status                = True
+                    str_msg                 = 'Write successful.'
+                except:
+                    b_status                = False
+                    str_msg                 = 'Some error occured on return payload. This usually indicates an error in the remote compute.'
             d_ret['localOp']['stream']                  = {}
-            d_ret['localOp']['stream']['status']        = True
+            d_ret['localOp']['stream']['status']        = b_status
             d_ret['localOp']['stream']['fileWritten']   = str_localFile
             d_ret['localOp']['stream']['timestamp']     = '%s' % datetime.datetime.now()
             d_ret['localOp']['stream']['filesize']      = "{:,}".format(len(str_response))
-            d_ret['status']                             = True
-            d_ret['msg']                                = 'Write successful.'
+            d_ret['localOp']['stream']['msg']           = str_msg
+            d_ret['status']                             = b_status
+            d_ret['msg']                                = str_msg
 
         if d_compress['archive'] == 'zip':
             self.qprint("Unzipping %s to %s"  % (str_localFile, str_unpackDir),
@@ -1347,31 +1354,37 @@ def zip_process(**kwargs):
     else:
         str_mode        = 'r'
 
-    ziphandler          = zipfile.ZipFile(str_zipFileName, str_mode, zipfile.ZIP_DEFLATED)
-    if str_mode == 'w':
-        if os.path.isdir(str_localPath):
-            zipdir(str_localPath, ziphandler, arcroot = str_arcroot)
-        else:
-            if len(str_arcroot):
-                str_arcname = str_arcroot.split('/')[-1] + str_localPath.split(str_arcroot)[1]
+    try:
+        ziphandler          = zipfile.ZipFile(str_zipFileName, str_mode, zipfile.ZIP_DEFLATED)
+        if str_mode == 'w':
+            if os.path.isdir(str_localPath):
+                zipdir(str_localPath, ziphandler, arcroot = str_arcroot)
             else:
-                str_arcname = str_localPath
-            try:
-                ziphandler.write(str_localPath, arcname = str_arcname)
-            except:
-                ziphandler.close()
-                os.remove(str_zipFileName)
-                return {
-                    'msg':      json.dumps({"msg": "No file or directory found for '%s'" % str_localPath}),
-                    'status':   False
-                }
-    if str_mode     == 'r':
-        ziphandler.extractall(str_localPath)
-    ziphandler.close()
+                if len(str_arcroot):
+                    str_arcname = str_arcroot.split('/')[-1] + str_localPath.split(str_arcroot)[1]
+                else:
+                    str_arcname = str_localPath
+                try:
+                    ziphandler.write(str_localPath, arcname = str_arcname)
+                except:
+                    ziphandler.close()
+                    os.remove(str_zipFileName)
+                    return {
+                        'msg':      json.dumps({"msg": "No file or directory found for '%s'" % str_localPath}),
+                        'status':   False
+                    }
+        if str_mode     == 'r':
+            ziphandler.extractall(str_localPath)
+        ziphandler.close()
+        str_msg             = '%s operation successful' % str_action
+        b_status            = True
+    except:
+        str_msg             = '%s operation failed'     % str_action
+        b_status            = False
     return {
-        'msg':              '%s operation successful' % str_action,
+        'msg':              str_msg,
         'fileProcessed':    str_zipFileName,
-        'status':           True,
+        'status':           b_status,
         'path':             str_localPath,
         'zipmode':          str_mode,
         'filesize':         "{:,}".format(os.stat(str_zipFileName).st_size),

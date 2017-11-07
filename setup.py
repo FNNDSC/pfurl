@@ -12,14 +12,14 @@ def readme():
 
 setup(
       name             =   'pfurl',
-      version          =   '1.3.8.dev0',
+      version          =   '1.3.9.dev0',
       description      =   '(Python) Path-File URL comms',
       long_description =   readme(),
       author           =   'Rudolph Pienaar',
       author_email     =   'rudolph.pienaar@gmail.com',
       url              =   'https://github.com/FNNDSC/pfurl',
       packages         =   ['pfurl'],
-      install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pyyaml'],
+      install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pyyaml', 'pfmisc'],
       test_suite       =   'nose.collector',
       tests_require    =   ['nose'],
       scripts          =   ['bin/pfurl'],

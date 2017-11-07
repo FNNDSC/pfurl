@@ -1,6 +1,6 @@
-##############
-pfurl - v1.3.7
-##############
+###################
+pfurl - v1.3.8.dev0
+###################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
     :target: https://badge.fury.io/py/pfurl

@@ -38,7 +38,7 @@ RUN apt-get update \
   && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils vim net-tools inetutils-ping \
   && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils \
   && pip3 install pyyaml 					     \
-  && pip3 install pfmisc					     \
+  && pip3 install pfmisci==1.0.1				     \
   && pip3 install pfurl==1.3.9.dev0
 
 COPY ./docker-entrypoint.py /dock/docker-entrypoint.py

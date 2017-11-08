@@ -86,7 +86,7 @@ class Pfurl():
         str_debugDir                    = '%s/tmp' % os.environ['HOME']
         if not os.path.exists(str_debugDir):
             os.makedirs(str_debugDir)
-        self.str_debugFile              = '%s/debug-charm.log' % str_debugDir
+        self.str_debugFile              = '%s/debug-pfurl.log' % str_debugDir
 
         self.dp                         = pfmisc.debug(    
                                             verbosity   = 0,

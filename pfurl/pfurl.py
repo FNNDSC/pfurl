@@ -148,6 +148,8 @@ class Pfurl():
             if key == 'version':                    self.str_version                = val
             if key == 'desc':                       self.str_desc                   = val
 
+        if self.b_quiet: self.dp.verbosity = -10
+
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)
             self.debug._b_syslog        = True

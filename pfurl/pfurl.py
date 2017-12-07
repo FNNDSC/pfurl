@@ -167,7 +167,11 @@ class Pfurl():
             self.qprint('pfurl: Command line args = %s' % sys.argv)
             if self._startFromCLI and (sys.argv) == 1: sys.exit(1)
 
-            self.col2_print("Will transmit to",     '%s://%s:%s' % (self.str_protocol, self.str_ip, self.str_port))
+            str_colon_port = ''
+            if self.str_port:
+                str_colon_port = ':' + self.str_port
+
+            self.col2_print("Will transmit to ",     '%s://%s%s' % (self.str_protocol, self.str_ip, str_colon_port))
 
     def storage_resolveBasedOnKey(self, *args, **kwargs):
         """
@@ -874,7 +878,12 @@ class Pfurl():
             str_msg         = json.dumps(d_msg)
         response            = io.BytesIO()
 
-        self.qprint("http://%s:%s%s" % (str_ip, str_port, self.str_URL) + '\n '+ str(d_msg),
+
+        str_colon_port = ''
+        if str_port:
+            str_colon_port = ':' + str_port
+
+        self.qprint("http://%s%s%s" % (str_ip, str_colon_port, self.str_URL) + '\n '+ str(d_msg),
                     comms  = 'tx')
 
         c = pycurl.Curl()

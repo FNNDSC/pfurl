@@ -722,22 +722,24 @@ class Pfurl():
             d_ret['localOp']['unzip']['filesize']       = '%s' % "{:,}".format(os.stat(d_fio['fileProcessed']).st_size)
             d_ret['status']                             = d_fio['status']
             d_ret['msg']                                = d_fio['msg']
-            self.dp.qprint('Removing zip file %s' % str_localFile)
-            os.remove(str_localFile)
+            if d_meta['transport']['compress']['cleanup']:
+                # NB: This zip file is actually in the unpack dir!        
+                self.dp.qprint('Removing zip file %s' % str_localFile)
+                os.remove(str_localFile)
 
         d_ret['localOp']['move']    = {}
-        # Handle case when a single has been sent w/o zipping
-        if not d_compress['archive'] == 'zip':
-            # str_remotePath, str_remoteFile  = os.path.split(d_remote['path'])
-            self.dp.qprint('Moving single file %s to %s...' % (str_localFile, 
-                                                            os.path.join(str_unpackDir, str_remoteFile)))
-            shutil.move(str_localFile, os.path.join(str_unpackDir, str_remoteFile))
-            d_ret['localOp']['move']    = {
-                'status':   True,
-                'msg':      'Single file move successful.'
-            }
-            d_ret['status']                             = d_ret['localOp']['move']['status']
-            d_ret['msg']                                = d_ret['localOp']['move']['msg']
+        # Handle case when a single file has been sent w/o zipping -- currently NON FUNCTIONAL!
+        # if not d_compress['archive'] == 'zip':
+        #     # str_remotePath, str_remoteFile  = os.path.split(d_remote['path'])
+        #     self.dp.qprint('Moving single file %s to %s...' % (str_localFile, 
+        #                                                     os.path.join(str_unpackDir, str_remoteFile)))
+        #     shutil.move(str_localFile, os.path.join(str_unpackDir, str_remoteFile))
+        #     d_ret['localOp']['move']    = {
+        #         'status':   True,
+        #         'msg':      'Single file move successful.'
+        #     }
+        #     d_ret['status']                             = d_ret['localOp']['move']['status']
+        #     d_ret['msg']                                = d_ret['localOp']['move']['msg']
 
         # Move file(s) to target dir
         self.dp.qprint('Moving all files in %s to %s' % (str_unpackDir, str_localPath))
@@ -757,9 +759,10 @@ class Pfurl():
                 d_ret['msg']                        = d_ret['localOp']['move']['msg']
                 break
 
-        # Clean up        
-        self.dp.qprint('Removing unpack dir %s' % str_unpackDir)
-        shutil.rmtree(str_unpackDir)
+        # Clean up
+        if d_meta['transport']['compress']['cleanup']:        
+            self.dp.qprint('Removing unpack dir %s' % str_unpackDir)
+            shutil.rmtree(str_unpackDir)
 
         self.dp.qprint("Returning: %s" % self.pp.pformat(d_ret).strip(), comms = 'status')
         return d_ret

@@ -17,7 +17,7 @@ pfurl - v1.3.16.0
 Overview
 ********
 
-This the bleeding edge repository that provides a curl-like client tool that is also able to perform simple file/directory functions (such as zip/unzip) suitable for remote http transmission:
+This repository provides a curl-like client tool that is also able to perform simple file/directory functions (such as zip/unzip) suitable for remote http transmission:
 
 - ``pfurl``: a tool to transfer data using HTTP (similar to ``curl``);
 

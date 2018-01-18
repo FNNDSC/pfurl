@@ -136,7 +136,7 @@ if __name__ == '__main__':
     try:
         fname   = 'pfurl_do(args, unknown)'
         str_cmd = eval(fname)
-        print(str_cmd)
+        # print(str_cmd)
         os.system(str_cmd)
     except:
         print("Misunderstood container app... exiting.")

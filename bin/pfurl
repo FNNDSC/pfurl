@@ -167,6 +167,11 @@ parser.add_argument(
  
 args = parser.parse_args()
 
+
+if args.b_version:
+    print("Version: %s" % str_version)
+    sys.exit(1)
+
 if args.http:
     # if the user enters --http and --url
     if args.url:
@@ -179,10 +184,6 @@ if args.http:
 elif not args.url:
     print("Error: No web address provided! Please refer to the README, or use the --man flag for help.")
     sys.exit(2)
-
-if args.b_version:
-    print("Version: %s" % str_version)
-    sys.exit(1)
 
 pfurl  = pfurl.Pfurl(
     url                         = args.url,

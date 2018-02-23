@@ -12,7 +12,7 @@ def readme():
 
 setup(
       name             =   'pfurl',
-      version          =   '1.3.16.0',
+      version          =   '1.3.16.2',
       description      =   '(Python) Path-File URL comms',
       long_description =   readme(),
       author           =   'Rudolph Pienaar',

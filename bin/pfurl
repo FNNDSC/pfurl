@@ -19,7 +19,7 @@ from    argparse            import ArgumentParser
 from    pfurl._colors       import Colors
 
 str_name    = 'pfurl'
-str_version = "1.3.16.0"
+str_version = "1.3.16.2"
 str_desc    = Colors.CYAN + """
 
         __            _ 

@@ -39,7 +39,14 @@ RUN apt-get update \
   && apt-get install -y libssl-dev libcurl4-openssl-dev bsdmainutils \
   && pip3 install pyyaml 					                                   \
   && pip3 install pfmisc==1.0.1				                               \
-  && pip3 install pfurl==1.3.16.0
+# && pip3 install pfurl==1.3.16.0
+#installing personal pfurl
+  && pip3 uninstall pfurl                                             \
+  && git clone https://github.com/iamemilio/pfurl.git                 \
+  && cd pfurl                                                         \
+  && git checkout version_patch                                       \
+  && pip3 install .                                                   \
+  && cd ..                                                            
 
 COPY ./docker-entrypoint.py /dock/docker-entrypoint.py
 RUN chmod 777 /dock                                                   \

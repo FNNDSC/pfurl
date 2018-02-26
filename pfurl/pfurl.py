@@ -155,19 +155,17 @@ class Pfurl():
         #allows deprecated programs to use the syntax and checks for certian corner cases where pfurl may fail or work unpredictably
         if self.http:
             if self.url:
-                print("pfurl: Error: You may only specify either url or http, not both! Exiting")
+                self.dp.qprint("pfurl: Error: You may only specify either url or http, not both! Exiting")
                 sys.exit(2)
             else:
-                print("Warning: The use of http is deprecated and will be removed in future iterations")
-                print('http arg: ', self.http)
+                self.dp.qprint("Warning: The use of http is deprecated and will be removed in future iterations")
                 if 'http://' not in self.http:
                     self.url = 'http://%s' % self.http
                 else:
                     self.url = self.http
         elif not self.url:
-            print("pfurl: Error: No web address provided! Exiting!")
+            self.dp.qprint("pfurl: Error: No web address provided! Exiting!")
             sys.exit(2)
-        print("url arg: ", self.url)
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)
@@ -179,7 +177,6 @@ class Pfurl():
             sys.exit(0)
 
         if not self.b_quiet:
-
             print(self.str_desc)
 
             if self.b_useDebug:

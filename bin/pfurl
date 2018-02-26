@@ -174,7 +174,10 @@ if args.http:
         sys.exit(2)
     else:
         print("Warning: The use of --http is deprecated and may not be supported in future updates")
-        args.url = args.http
+        if 'http://' not in args.http:
+            args.url = 'http://%s' % args.http
+        else:
+            args.url = args.http
 # no address specified, exit ---> Default pathing removed
 elif not args.url:
     print("Error: No web address provided! Please refer to the README, or use the --man flag for help.")

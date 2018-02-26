@@ -159,10 +159,15 @@ class Pfurl():
                 sys.exit(2)
             else:
                 print("Warning: The use of http is deprecated and will be removed in future iterations")
-                self.url = self.http
+                print('http arg: ', self.http)
+                if 'http://' not in self.http:
+                    self.url = 'http://%s' % self.http
+                else:
+                    self.url = self.http
         elif not self.url:
             print("pfurl: Error: No web address provided! Exiting!")
             sys.exit(2)
+        print("url arg: ", self.url)
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)

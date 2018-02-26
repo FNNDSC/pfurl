@@ -113,10 +113,8 @@ class Pfurl():
         self.str_debugFile              = ''
         self.b_unverifiedCerts          = False
 
-
         #for deprecated projects --> this should be removed in future iterations
         self.http                       = ''
-
         self.LC                         = 40
         self.RC                         = 40
         self.str_name                   = ''

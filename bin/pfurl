@@ -18,6 +18,9 @@ from    argparse            import RawTextHelpFormatter
 from    argparse            import ArgumentParser
 from    pfurl._colors       import Colors
 
+str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
+str_defPort = '5055'
+
 str_name    = 'pfurl'
 str_version = "1.3.16.2"
 str_desc    = Colors.CYAN + """
@@ -72,6 +75,13 @@ parser.add_argument(
     dest    = 'verb',
     default = 'POST',
     help    = 'REST verb.'
+)
+parser.add_argument(
+    '--http',
+    action  = 'store',
+    dest    = 'http',
+    default = '%s:%s' % (str_defIP, str_defPort),
+    help    = 'HTTP string: <IP>[:<port>]</some/path/>'
 )
 parser.add_argument(
     '--auth',
@@ -143,50 +153,17 @@ parser.add_argument(
     action  = 'store_true',
     default = False
 )
-parser.add_argument(
-    '--http',
-    action  = 'store',
-    dest    = 'http',
-    default = '',
-    help    = 'HTTP string: <IP>[:<port>]</some/path/>'
-)
-parser.add_argument(
-    '--url',
-    action = 'store',
-    dest   = 'url',
-    default= '',
-    help   = 'any web address'
-)
-parser.add_argument(
-    '--allowUnverifiedCertificates',
-    action = 'store_true',
-    dest   = 'unverifiedCerts',
-    default= False,
-    help   = 'allows uncertified and self-signed certificates over https'
-)
- 
-args = parser.parse_args()
 
-if args.http:
-    # if the user enters --http and --url
-    if args.url:
-        print("Error: You may only specify --url or --http, not both! Exiting")
-        sys.exit(2)
-    else:
-        print("Warning: The use of --http is deprecated and may not be supported in future updates")
-        args.url = args.http
-# no address specified, exit ---> Default pathing removed
-elif not args.url:
-    print("Error: No web address provided! Please refer to the README, or use the --man flag for help.")
-    sys.exit(2)
+
+args    = parser.parse_args()
 
 if args.b_version:
     print("Version: %s" % str_version)
     sys.exit(1)
 
 pfurl  = pfurl.Pfurl(
-    url                         = args.url,
     msg                         = args.msg,
+    http                        = args.http,
     verb                        = args.verb,
     contentType                 = args.contentType,
     auth                        = args.auth,
@@ -199,8 +176,7 @@ pfurl  = pfurl.Pfurl(
     desc                        = str_desc,
     name                        = str_name,
     version                     = str_version,
-    startFromCLI                = True,
-    b_unverifiedCerts           = args.unverifiedCerts
+    startFromCLI                = True
     )
 
 if not args.jsonpprintindent:

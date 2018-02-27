@@ -94,11 +94,15 @@ class Pfurl():
                                             within      = self.__name__ 
                                             )
 
-        self.url                        = ""
+        self.str_http                   = ""
+        self.str_ip                     = ""
+        self.str_port                   = ""
+        self.str_URL                    = ""
         self.str_verb                   = ""
         self.str_msg                    = ""
         self.str_auth                   = ""
         self.d_msg                      = {}
+        self.str_protocol               = "http"
         self.pp                         = pprint.PrettyPrinter(indent=4)
         self.b_man                      = False
         self.str_man                    = ''
@@ -111,11 +115,6 @@ class Pfurl():
         self.str_contentType            = ''
         self.b_useDebug                 = False
         self.str_debugFile              = ''
-        self.b_unverifiedCerts          = False
-
-
-        #for deprecated projects --> this should be removed in future iterations
-        self.http                       = ''
 
         self.LC                         = 40
         self.RC                         = 40
@@ -130,11 +129,12 @@ class Pfurl():
                     self.d_msg              = json.loads(self.str_msg)
                 except:
                     pass
-            if key == 'http':                       self.http                       = val
-            if key == 'url':                        self.url                        = val
+            if key == 'http':                       self.httpStr_parse( http        = val)
             if key == 'auth':                       self.str_auth                   = val
             if key == 'verb':                       self.str_verb                   = val
             if key == 'contentType':                self.str_contentType            = val
+            if key == 'ip':                         self.str_ip                     = val
+            if key == 'port':                       self.str_port                   = val
             if key == 'b_quiet':                    self.b_quiet                    = val
             if key == 'b_raw':                      self.b_raw                      = val
             if key == 'b_oneShot':                  self.b_oneShot                  = val
@@ -147,22 +147,8 @@ class Pfurl():
             if key == 'name':                       self.str_name                   = val
             if key == 'version':                    self.str_version                = val
             if key == 'desc':                       self.str_desc                   = val
-            if key == 'b_unverifiedCerts':          self.b_unverifiedCerts          = val
-
 
         if self.b_quiet: self.dp.verbosity = -10
-
-        #allows deprecated programs to use the syntax and checks for certian corner cases where pfurl may fail or work unpredictably
-        if self.http:
-            if self.url:
-                print("pfurl: Error: You may only specify either url or http, not both! Exiting")
-                sys.exit(2)
-            else:
-                print("Warning: The use of http is deprecated and will be removed in future iterations")
-                self.url = self.http
-        elif not self.url:
-            print("pfurl: Error: No web address provided! Exiting!")
-            sys.exit(2)
 
         if self.b_useDebug:
             self.debug                  = Message(logTo = self.str_debugFile)
@@ -190,7 +176,11 @@ class Pfurl():
             self.dp.qprint('pfurl: Command line args = %s' % sys.argv)
             if self._startFromCLI and (sys.argv) == 1: sys.exit(1)
 
-            self.col2_print("Will transmit to ",     '%s' % (self.url))
+            str_colon_port = ''
+            if self.str_port:
+                str_colon_port = ':' + self.str_port
+
+            self.col2_print("Will transmit to ",     '%s://%s%s' % (self.str_protocol, self.str_ip, str_colon_port))
 
     def storage_resolveBasedOnKey(self, *args, **kwargs):
         """
@@ -286,17 +276,17 @@ class Pfurl():
             to a remote REST-like service: """ + Colors.GREEN + """
 
                  ./pfurl.py [--auth <username:passwd>] [--verb <GET/POST>]   \\
-                            --url ://[:]</some/path/>
+                            --http <IP>[:<port>]</some/path/>
 
             """ + Colors.WHITE + """
             Where --auth is an optional authorization to pass to the REST API,
-            --verb denotes the REST verb to use and --url specifies the REST url.
+            --verb denotes the REST verb to use and --http specifies the REST URL.
 
             Additionally, a 'message' described in JSON syntax can be pushed to the
             remote service, in the following syntax: """ + Colors.GREEN + """
 
                  pfurl     [--auth <username:passwd>] [--verb <GET/POST>]   \\
-                            --url ://[:]</some/path/>               \\
+                            --http <IP>[:<port>]</some/path/>               \\
                            [--msg <JSON-formatted-string>]
 
             """ + Colors.WHITE + """
@@ -304,7 +294,7 @@ class Pfurl():
             contextual syntax, for example:
             """ + Colors.GREEN + """
 
-                 pfurl      --verb POST --url %s --msg \\
+                 pfurl      --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                                 '{  "action": "run",
                                     "meta": {
                                         "cmd":      "cal 7 1970",
@@ -315,7 +305,7 @@ class Pfurl():
                                 }'
 
 
-            """ % (self.url) + Colors.CYAN + """
+            """ % (self.str_ip, self.str_port) + Colors.CYAN + """
 
             The following specific action directives are directly handled by script:
             """ + "\n" + \
@@ -375,7 +365,7 @@ class Pfurl():
                 """ + Colors.YELLOW + """EXAMPLE:
                 """ + Colors.LIGHT_GREEN + """
                 
-                pfurl --verb POST --url %s --msg \\
+                pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
                             {
@@ -399,11 +389,11 @@ class Pfurl():
                                     }
                             }
                     }'
-                """ % (self.url) + Colors.NO_COLOUR  + """
+                """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR  + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
                 
-                pfurl --verb POST --url %s --msg \\
+                pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
                             {
@@ -424,7 +414,7 @@ class Pfurl():
                                     }
                             }
                     }'
-                """ % (self.url) + Colors.NO_COLOUR
+                """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR
 
         return str_manTxt
 
@@ -468,7 +458,7 @@ class Pfurl():
                 """ + Colors.YELLOW + """EXAMPLE -- using zip:
                 """ + Colors.LIGHT_GREEN + """
                 
-                pfurl --verb POST --url %s --msg \\
+                pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
                             {
@@ -492,11 +482,11 @@ class Pfurl():
                                     }
                             }
                     }'
-                """ % (self.url) + Colors.NO_COLOUR + """
+                """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
                 
-                pfurl --verb POST --url %s/api/v1/cmd/ --msg \\
+                pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
                             {
@@ -517,7 +507,7 @@ class Pfurl():
                                     }
                             }
                     }'
-                """ % (self.url) + Colors.NO_COLOUR
+                """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR
 
         return str_manTxt
 
@@ -525,29 +515,35 @@ class Pfurl():
         """
         Just the core of the pycurl logic.
         """
+
+        str_ip              = self.str_ip
+        str_port            = self.str_port
         verbose             = 0
         d_msg               = {}
 
         for k,v in kwargs.items():
+            if k == 'ip':       str_ip      = v
+            if k == 'port':     str_port    = v
             if k == 'msg':      d_msg       = v
             if k == 'verbose':  verbose     = v
 
         response            = io.BytesIO()
 
-        self.dp.qprint(self.url,
+        str_query   = ''
+        if len(d_msg):
+            d_meta              = d_msg['meta']
+            str_query           = '?%s' % urllib.parse.urlencode(d_msg)
+
+        str_URL = "http://%s:%s%s%s" % (str_ip, str_port, self.str_URL, str_query)
+
+        self.dp.qprint(str_URL,
                     comms  = 'tx')
 
-        c = pycurl.Curl()
-        c.setopt(c.URL, self.url)
+        c                   = pycurl.Curl()
+        c.setopt(c.URL, str_URL)
         if verbose: c.setopt(c.VERBOSE, 1)
         c.setopt(c.FOLLOWLOCATION,  1)
         c.setopt(c.WRITEFUNCTION,   response.write)
-
-        if self.b_unverifiedCerts:
-            self.dp.qprint("Attempting an insecure connection with trusted host")
-            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
-            c.setopt(pycurl.SSL_VERIFYHOST, 0)
-
         if len(self.str_auth):
             c.setopt(c.USERPWD, self.str_auth)
         self.dp.qprint("Waiting for PULL response...", comms = 'status')
@@ -888,12 +884,16 @@ class Pfurl():
         str_fileToProcess   = ""
         str_encoding        = "none"
         d_ret               = {}
+        str_ip              = self.str_ip
+        str_port            = self.str_port
         verbose             = 0
 
         for k,v in kwargs.items():
             if k == 'fileToPush':   str_fileToProcess   = v
             if k == 'encoding':     str_encoding        = v
             if k == 'd_ret':        d_ret               = v
+            if k == 'ip':           str_ip              = v
+            if k == 'port':         str_port            = v
             if k == 'verbose':      verbose             = v
 
         if len(self.str_jsonwrapper):
@@ -902,16 +902,18 @@ class Pfurl():
             str_msg         = json.dumps(d_msg)
         response            = io.BytesIO()
 
-        self.qprint(self.url + '\n '+ str(d_msg),
+
+        str_colon_port = ''
+        if str_port:
+            str_colon_port = ':' + str_port
+
+        self.qprint("http://%s%s%s" % (str_ip, str_colon_port, self.str_URL) + '\n '+ str(d_msg),
                     comms  = 'tx')
 
         c = pycurl.Curl()
         c.setopt(c.POST, 1)
-        c.setopt(c.URL, self.url)
-        if self.b_unverifiedCerts:
-            self.dp.qprint("Attempting an insecure connection with trusted host")
-            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
-            c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        # c.setopt(c.URL, "http://%s:%s/api/v1/cmd/" % (str_ip, str_port))
+        c.setopt(c.URL, "http://%s:%s%s" % (str_ip, str_port, self.str_URL))
         if str_fileToProcess:
             self.dp.qprint("Building form-based multi-part message...", comms = 'status')
             fread               = open(str_fileToProcess, "rb")
@@ -931,6 +933,7 @@ class Pfurl():
             #          )
             c.setopt(c.POSTFIELDS, str_msg)
         if verbose:                     c.setopt(c.VERBOSE, 1)
+        # print(self.str_contentType)
         if len(self.str_contentType):   c.setopt(c.HTTPHEADER, ['Content-type: %s' % self.str_contentType])
         c.setopt(c.WRITEFUNCTION,   response.write)
         if len(self.str_auth):
@@ -993,12 +996,18 @@ class Pfurl():
             if k == 'd_ret':        d_ret               = v
 
         d_meta              = d_msg['meta']
+        str_ip              = self.str_ip
+        str_port            = self.str_port
         if 'remote' in d_meta:
             d_remote            = d_meta['remote']
-            
+            if 'ip' in d_remote:    str_ip      = d_remote['ip']
+            if 'port' in d_remote:  str_port    = d_remote['port']
+
         d_ret               = self.push_core(   d_msg,
                                                 fileToPush  = str_fileToProcess,
-                                                encoding    = str_encoding
+                                                encoding    = str_encoding,
+                                                ip          = str_ip,
+                                                port        = str_port
                                             )
         return d_ret
 
@@ -1014,6 +1023,13 @@ class Pfurl():
         str_localPath       = d_local['path']
 
         d_remote            = d_meta['remote']
+        str_ip              = self.str_ip
+        str_port            = self.str_port
+        if 'ip' in d_remote:
+            str_ip          = d_remote['ip']
+        if 'port' in d_remote:
+            str_port        = d_remote['port']
+
         str_mechanism       = ""
         str_encoding        = ""
         str_archive         = ""
@@ -1267,6 +1283,19 @@ class Pfurl():
 
         return self.pathOp_do(d_msg, action = 'pull')
 
+    def httpStr_parse(self, **kwargs):
+
+        for k,v in kwargs.items():
+            if k == 'http':     self.str_http   = v
+
+        # Split http string into IP:port and URL
+        path_split_url = self.str_http.split('/')
+        str_IPport          = path_split_url[0]
+        self.str_URL        = '/' + '/'.join(path_split_url[1:])
+        host_port_pair = str_IPport.split(':')
+        self.str_ip = host_port_pair[0]
+        if len(host_port_pair) > 1:
+            self.str_port = host_port_pair[1]
 
     def httpResponse_bodyParse(self, **kwargs):
         """
@@ -1301,9 +1330,8 @@ class Pfurl():
             if key == 'msg':
                 self.str_msg    = val
                 self.d_msg      = json.loads(self.str_msg)
-            if key == 'url':               self.url               = val
-            if key == 'verb':              self.str_verb          = val
-            if key == 'b_unverifiedCerts': self.b_unverifiedCerts = val
+            if key == 'http':       self.httpStr_parse( http    = val)
+            if key == 'verb':       self.str_verb               = val
 
         if len(self.str_msg):
             if 'action' in self.d_msg: str_action  = self.d_msg['action']

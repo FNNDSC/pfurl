@@ -51,8 +51,6 @@ class Pfurl():
         else:
             write   = print
 
-        # pudb.set_trace()
-
         str_caller  = inspect.stack()[1][3]
 
         if not self.b_quiet:
@@ -121,6 +119,8 @@ class Pfurl():
         self.str_name                   = ''
         self.str_version                = ''
         self.str_desc                   = ''
+        self.b_unverifiedCerts          = False
+        self.str_authToken              = ''
 
         for key,val in kwargs.items():
             if key == 'msg':
@@ -129,7 +129,7 @@ class Pfurl():
                     self.d_msg              = json.loads(self.str_msg)
                 except:
                     pass
-            if key == 'http':                       self.httpStr_parse( http        = val)
+            if key == 'http':                       self.httpStr_parse(http         = val)
             if key == 'auth':                       self.str_auth                   = val
             if key == 'verb':                       self.str_verb                   = val
             if key == 'contentType':                self.str_contentType            = val
@@ -147,6 +147,8 @@ class Pfurl():
             if key == 'name':                       self.str_name                   = val
             if key == 'version':                    self.str_version                = val
             if key == 'desc':                       self.str_desc                   = val
+            if key == 'unverifiedCerts':            self.b_unverifiedCerts          = val
+            if key == 'authToken':                  self.str_authToken              = val
 
         if self.b_quiet: self.dp.verbosity = -10
 
@@ -207,7 +209,7 @@ class Pfurl():
             if k == 'key':  str_key = v
         d_msg['meta']['key']    = str_key
 
-        # pudb.set_trace()
+        # 
         d_ret = self.pullPath_core(d_msg = d_msg)
 
         return {
@@ -533,14 +535,21 @@ class Pfurl():
         if len(d_msg):
             d_meta              = d_msg['meta']
             str_query           = '?%s' % urllib.parse.urlencode(d_msg)
-
-        str_URL = "http://%s:%s%s%s" % (str_ip, str_port, self.str_URL, str_query)
-
+        
+        str_URL = "%s://%s:%s%s%s" % (self.str_protocol, str_ip, str_port, self.str_URL, str_query)
         self.dp.qprint(str_URL,
                     comms  = 'tx')
 
-        c                   = pycurl.Curl()
+
+        c = pycurl.Curl()
         c.setopt(c.URL, str_URL)
+        if self.b_unverifiedCerts:
+            self.dp.qprint("Making an insecure connection with trusted host")
+            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
+            c.setopt(pycurl.SSL_VERIFYHOST, 0)
+        if self.str_authToken:
+            header = 'Authorization: bearer %s' % self.str_authToken
+            c.setopt(pycurl.HTTPHEADER, [header])
         if verbose: c.setopt(c.VERBOSE, 1)
         c.setopt(c.FOLLOWLOCATION,  1)
         c.setopt(c.WRITEFUNCTION,   response.write)
@@ -668,7 +677,6 @@ class Pfurl():
         str_response            = d_pull['response']
         d_pull['response']      = '<truncated>'
 
-        # pudb.set_trace()
         if not d_pull['status']:
             if 'stdout' in d_pull:
                 return {'stdout': json.dumps(d_pull['stdout'])}
@@ -863,7 +871,7 @@ class Pfurl():
                 else:
                     if b_isDir: b_exists = False
 
-        d_ret               = {
+        d_ret = {
             'action':   d_msg['action'],
             'dir':      str_checkedDir,
             'status':   b_exists,
@@ -906,14 +914,22 @@ class Pfurl():
         str_colon_port = ''
         if str_port:
             str_colon_port = ':' + str_port
-
-        self.qprint("http://%s%s%s" % (str_ip, str_colon_port, self.str_URL) + '\n '+ str(d_msg),
+        
+        self.qprint("%s://%s%s%s" % (self.str_protocol, str_ip, str_colon_port, self.str_URL) + '\n '+ str(d_msg),
                     comms  = 'tx')
 
         c = pycurl.Curl()
         c.setopt(c.POST, 1)
-        # c.setopt(c.URL, "http://%s:%s/api/v1/cmd/" % (str_ip, str_port))
-        c.setopt(c.URL, "http://%s:%s%s" % (str_ip, str_port, self.str_URL))
+        # c.setopt(c.URL, "%s://%s:%s/api/v1/cmd/" % (str_ip, str_port))
+        c.setopt(c.URL, "%s://%s:%s%s" % (self.str_protocol, str_ip, str_port, self.str_URL))
+        if self.b_unverifiedCerts:
+            self.dp.qprint("Attempting an insecure connection with trusted host")
+            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
+            c.setopt(pycurl.SSL_VERIFYHOST, 0)
+
+        if self.str_authToken:
+            header = 'Authorization: bearer %s' % self.str_authToken
+            c.setopt(pycurl.HTTPHEADER, [header])
         if str_fileToProcess:
             self.dp.qprint("Building form-based multi-part message...", comms = 'status')
             fread               = open(str_fileToProcess, "rb")
@@ -932,7 +948,7 @@ class Pfurl():
             #                      ]
             #          )
             c.setopt(c.POSTFIELDS, str_msg)
-        if verbose:                     c.setopt(c.VERBOSE, 1)
+        if verbose: c.setopt(c.VERBOSE, 1)
         # print(self.str_contentType)
         if len(self.str_contentType):   c.setopt(c.HTTPHEADER, ['Content-type: %s' % self.str_contentType])
         c.setopt(c.WRITEFUNCTION,   response.write)
@@ -1015,7 +1031,7 @@ class Pfurl():
         """
         """
 
-        # pudb.set_trace()
+        # 
 
         d_meta              = d_msg['meta']
         str_meta            = json.dumps(d_meta)
@@ -1039,7 +1055,7 @@ class Pfurl():
             str_archive     = d_compress['archive']
             str_encoding    = d_compress['encoding']
 
-        # pudb.set_trace()
+        # 
         str_remotePath      = self.remoteLocation_resolveSimple(d_remote)['path']
 
         if 'cleanup' in d_compress:
@@ -1178,7 +1194,7 @@ class Pfurl():
         else:
             d_transport = d_meta['transport']
 
-        # pudb.set_trace()
+        # 
         # First check on the paths, both local and remote
         self.dp.qprint('Checking local path status...', comms = 'status')
         d_ret['localCheck'] = self.path_localLocationCheck(d_msg)
@@ -1283,10 +1299,14 @@ class Pfurl():
 
         return self.pathOp_do(d_msg, action = 'pull')
 
-    def httpStr_parse(self, **kwargs):
-
-        for k,v in kwargs.items():
-            if k == 'http':     self.str_http   = v
+    def httpStr_parse(self, http):
+        
+        if 'http://' in http or 'https://' in http:
+            protocol, address = http.split("://")
+            self.str_protocol = protocol
+            self.str_http         = address
+        else:
+            self.str_http         = http
 
         # Split http string into IP:port and URL
         path_split_url = self.str_http.split('/')
@@ -1325,13 +1345,15 @@ class Pfurl():
         :return:
         """
         str_action  = ''
+        http        = ''
 
         for key,val in kwargs.items():
             if key == 'msg':
                 self.str_msg    = val
                 self.d_msg      = json.loads(self.str_msg)
-            if key == 'http':       self.httpStr_parse( http    = val)
-            if key == 'verb':       self.str_verb               = val
+            if key == 'http':            self.httpStr_parse(http         = val)
+            if key == 'verb':            self.str_verb              = val
+            if key == 'unverifiedCerts': self.b_unverifiedCerts     = val
 
         if len(self.str_msg):
             if 'action' in self.d_msg: str_action  = self.d_msg['action']
@@ -1473,10 +1495,13 @@ def base64_process(**kwargs):
         }
 
     if str_action       == "decode":
-        if len(data) % 4:
+       # if len(data) % 4:
             # not a multiple of 4, add padding:
-            data += '=' * (4 - len(data) % 4)
-        bytes_decoded     = base64.b64decode(data)
+            # data += '=' * (4 - len(data) % 4)
+
+        # adding 3 padding = will never succumb to the TypeError and will always produce the same result.
+        # https://gist.github.com/perrygeo/ee7c65bb1541ff6ac770
+        bytes_decoded     = base64.b64decode(data + "===")
         with open(str_fileToSave, 'wb') as f:
             f.write(bytes_decoded)
             f.close()

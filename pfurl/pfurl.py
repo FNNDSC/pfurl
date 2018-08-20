@@ -383,7 +383,6 @@ class Pfurl():
                                     {
                                         "mechanism":    "compress",
                                         "compress": {
-                                            "encoding": "base64",
                                             "archive":  "zip",
                                             "unpack":   true,
                                             "cleanup":  true
@@ -476,7 +475,6 @@ class Pfurl():
                                     {
                                         "mechanism":    "compress",
                                         "compress": {
-                                            "encoding": "base64",
                                             "archive":  "zip",
                                             "unpack":   true,
                                             "cleanup":  true
@@ -689,37 +687,25 @@ class Pfurl():
         if d_compress['archive']     == "zip":       str_fileSuffix   = ".zip"
         str_localFile       = '%s/%s' % (str_unpackDir, str_uuid) + str_fileSuffix
 
-        if d_compress['encoding'] == 'base64':
-            self.dp.qprint("Decoding base64 encoded text stream to %s..." % \
-                        str_localFile, comms = 'status')
-            d_fio = base64_process(
-                action          = 'decode',
-                payloadBytes    = str_response,
-                saveToFile      = str_localFile
-            )
-            d_ret['localOp']['decode']      = d_fio
-            d_ret['status']                 = d_fio['status']
-            d_ret['msg']                    = d_fio['msg']
-        else:
-            self.dp.qprint("Writing byte stream to %s..." % str_localFile,
-                        comms = 'status')
-            with open(str_localFile, 'wb') as fh:
-                try:    
-                    fh.write(str_response)
-                    fh.close()
-                    b_status                = True
-                    str_msg                 = 'Write successful.'
-                except:
-                    b_status                = False
-                    str_msg                 = 'Some error occured on return payload. This usually indicates an error in the remote compute.'
-            d_ret['localOp']['stream']                  = {}
-            d_ret['localOp']['stream']['status']        = b_status
-            d_ret['localOp']['stream']['fileWritten']   = str_localFile
-            d_ret['localOp']['stream']['timestamp']     = '%s' % datetime.datetime.now()
-            d_ret['localOp']['stream']['filesize']      = "{:,}".format(len(str_response))
-            d_ret['localOp']['stream']['msg']           = str_msg
-            d_ret['status']                             = b_status
-            d_ret['msg']                                = str_msg
+        self.dp.qprint("Writing byte stream to %s..." % str_localFile,
+                    comms = 'status')
+        with open(str_localFile, 'wb') as fh:
+            try:    
+                fh.write(str_response)
+                fh.close()
+                b_status                = True
+                str_msg                 = 'Write successful.'
+            except:
+                b_status                = False
+                str_msg                 = 'Some error occured on return payload. This usually indicates an error in the remote compute.'
+        d_ret['localOp']['stream']                  = {}
+        d_ret['localOp']['stream']['status']        = b_status
+        d_ret['localOp']['stream']['fileWritten']   = str_localFile
+        d_ret['localOp']['stream']['timestamp']     = '%s' % datetime.datetime.now()
+        d_ret['localOp']['stream']['filesize']      = "{:,}".format(len(str_response))
+        d_ret['localOp']['stream']['msg']           = str_msg
+        d_ret['status']                             = b_status
+        d_ret['msg']                                = str_msg
 
         if d_compress['archive'] == 'zip':
             self.dp.qprint("Unzipping %s to %s"  % (str_localFile, str_unpackDir),
@@ -890,7 +876,6 @@ class Pfurl():
         """
 
         str_fileToProcess   = ""
-        str_encoding        = "none"
         d_ret               = {}
         str_ip              = self.str_ip
         str_port            = self.str_port
@@ -898,7 +883,6 @@ class Pfurl():
 
         for k,v in kwargs.items():
             if k == 'fileToPush':   str_fileToProcess   = v
-            if k == 'encoding':     str_encoding        = v
             if k == 'd_ret':        d_ret               = v
             if k == 'ip':           str_ip              = v
             if k == 'port':         str_port            = v
@@ -935,7 +919,6 @@ class Pfurl():
             fread               = open(str_fileToProcess, "rb")
             filesize            = os.path.getsize(str_fileToProcess)
             c.setopt(c.HTTPPOST, [  ("local",       (c.FORM_FILE, str_fileToProcess)),
-                                    ("encoding",    str_encoding),
                                     ("d_msg",       str_msg),
                                     ("filename",    str_fileToProcess)]
                      )
@@ -1004,11 +987,9 @@ class Pfurl():
         """
 
         str_fileToProcess   = ""
-        str_encoding        = "none"
         d_ret               = {}
         for k,v in kwargs.items():
             if k == 'fileToPush':   str_fileToProcess   = v
-            if k == 'encoding':     str_encoding        = v
             if k == 'd_ret':        d_ret               = v
 
         d_meta              = d_msg['meta']
@@ -1021,7 +1002,6 @@ class Pfurl():
 
         d_ret               = self.push_core(   d_msg,
                                                 fileToPush  = str_fileToProcess,
-                                                encoding    = str_encoding,
                                                 ip          = str_ip,
                                                 port        = str_port
                                             )
@@ -1047,13 +1027,11 @@ class Pfurl():
             str_port        = d_remote['port']
 
         str_mechanism       = ""
-        str_encoding        = ""
         str_archive         = ""
         d_transport         = d_meta['transport']
         if 'compress' in d_transport:
             d_compress      = d_transport['compress']
             str_archive     = d_compress['archive']
-            str_encoding    = d_compress['encoding']
 
         # 
         str_remotePath      = self.remoteLocation_resolveSimple(d_remote)['path']
@@ -1096,24 +1074,9 @@ class Pfurl():
             self.dp.qprint("Zipped to %s..." % str_fileToProcess, comms = 'status')
             d_ret['local']['zip']               = d_fio
 
-        # Encode possible binary filedata in base64 suitable for text-only
-        # transmission.
-        if str_encoding     == 'base64':
-            self.dp.qprint("base64 encoding target... %s" % str_fileToProcess + ".b64" , comms = 'status')
-            d_fio   = base64_process(
-                action      = 'encode',
-                payloadFile = str_fileToProcess,
-                saveToFile  = os.path.basename(str_fileToProcess) + ".b64"
-            )
-            str_fileToProcess       = d_fio['fileProcessed']
-            self.dp.qprint("base64 encoded to %s..." % str_fileToProcess, comms = 'status')
-            str_base64File          = os.path.basename(str_fileToProcess)
-            d_ret['local']['encoding']                   = d_fio
-
         # Push the actual file -- note the d_ret!
         d_ret['remoteServer']  = self.push_core(    d_msg,
-                                                    fileToPush  = str_fileToProcess,
-                                                    encoding    = str_encoding)
+                                                    fileToPush  = str_fileToProcess)
                                                     # d_ret       = d_ret)
 
         if b_cleanZip:
@@ -1184,7 +1147,6 @@ class Pfurl():
             d_transport =  {
                     "mechanism":    "compress",
                     "compress": {
-                        "encoding": "none",
                         "archive":  "zip",
                         "unpack":   True,
                         "cleanup":  True

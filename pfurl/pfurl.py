@@ -697,7 +697,7 @@ class Pfurl():
                 str_msg                 = 'Write successful.'
             except:
                 b_status                = False
-                str_msg                 = 'Some error occured on return payload. This usually indicates an error in the remote compute.'
+                str_msg                 = 'Some error occurred on return payload. This usually indicates an error in the remote compute.'
         d_ret['localOp']['stream']                  = {}
         d_ret['localOp']['stream']['status']        = b_status
         d_ret['localOp']['stream']['fileWritten']   = str_localFile

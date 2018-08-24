@@ -1091,14 +1091,19 @@ class Pfurl():
             d_ret['status'] = d_ret['remoteServer']['status']
             d_ret['msg']    = d_ret['remoteServer']['msg']
         else:
-            d_ret['status'] = d_ret['remoteServer']['decode']['status']
-            d_ret['msg']    = d_ret['remoteServer']['decode']['msg']
-            # raise Exception('Invalid Response')
+            if type(d_ret['remoteServer']) is dict:
+                d_ret['status'] = d_ret['remoteServer']['decode']['status']
+                d_ret['msg'] = d_ret['remoteServer']['decode']['msg']
+            else:
+                d_ret['msg'] = "Invalid response from server"
+                d_ret['status'] = False
+                d_ret['remoteServer'] = {
+                    'status':  False,
+                    'msg': 'TypeError: Invalid response',
+                    'str_error': d_ret['str_error']
+                }
 
         return d_ret
-
-        # return {'stdout': {'return' : d_ret},
-        #         'status': d_ret['fromServer']['status']}
 
     def pushPath_copy(self, d_msg, **kwargs):
         """

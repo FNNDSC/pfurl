@@ -16,13 +16,13 @@ import  sys
 import  pfurl
 from    argparse            import RawTextHelpFormatter
 from    argparse            import ArgumentParser
-from    pfurl._colors       import Colors
+from    pfmisc._colors      import Colors
 
 str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "1.3.18.0"
+str_version = "1.3.20.0"
 str_desc    = Colors.CYAN + """
 
         __            _ 
@@ -51,14 +51,165 @@ str_desc    = Colors.CYAN + """
     'pfurl' is designed to be part of the ChRIS/CHIPS framework.
     
 """ + \
-           Colors.BLINK_RED +  """
+           Colors.RED +  """
         
               +---------------------------------------------------------+
-              | NOTE THAT 'pfurl' COMMS ARE NOT NATIVELY ENCRYPTED!     |
-              | USE AN SSH TUNNEL IF YOU NEED SECURE DATA TRANSMISSION. |
+              | Use --auth <user>:<password> and --authToken <token>    |
+              |         arguments for secure communication.             |    
               +---------------------------------------------------------+
               
 """ + Colors.NO_COLOUR
+
+def synopsis(ab_shortOnly = False):
+    scriptName = os.path.basename(sys.argv[0])
+    shortSynopsis =  '''
+    NAME
+
+	    pfurl 
+
+        - curl-type http communication client.
+
+    SYNOPSIS
+
+            pfurl                                                   \\
+                    [--verb <RESTVERB>]                             \\
+                    [--http <IP>:<port>]                            \\
+                    [--auth <user>:<passwd>]                        \\
+                    [--jsonwrapper <outerMsgJSONwrapper>]           \\
+                    [--quiet]                                       \\
+                    [--raw]                                         \\
+                    [--oneShot]                                     \\
+                    [--man <help>]                                  \\
+                    [-x|--desc]                                     \\
+                    [-y|--synopsis]                                 \\
+                    [--content-type <type>]                         \\
+                    [--jsonpprintindent <indent>]                   \\
+                    [--httpResponseBodyParse]                       \\
+                    [--unverifiedCerts]                             \\
+                    [--authToken <token>]                           \\
+                    [--version]                                     \\
+                    [-v|--verbosity <verbosity>]                    \\
+                    --msg <JSONpayload>
+
+    BRIEF EXAMPLE
+
+            pfurl                                                   \\
+                --verb POST --raw                                   \\
+                --http 127.0.0.1:5010/api/v1/cmd                    \\
+                --jsonwrapper 'payload'                             \\
+                --msg                                               \\
+                    '{  "action": "hello",
+                            "meta": {
+                                    "askAbout":     "sysinfo",
+                                    "echoBack":     "Hi there!"
+                            }
+                    }' --quiet --jsonpprintindent 4 
+    '''
+
+    description =  '''
+    DESCRIPTION
+
+        `pfurl` is a communications program that sends http-type curl 
+        data to a remote service. Although it is mostly used in the 
+        "pf" family of programs and in the ChRIS suite, it can be also
+        used a general-purpose curl replacement.
+
+        In addition to sending JSON-formatted strings to a service, 
+        `pfurl` can also send files and whole directories -- the latter
+        being a zip compression of a directory tree.
+
+        Various authentication options for verifying identify with the
+        remote service are also available.
+
+    ARGS
+
+        [--verb <RESTVERB>]
+        The REST verb to use for the remote service.
+
+        [--http <IP>:<port>]                            
+        The address of the remote service.
+
+        [--auth <user>:<passwd>]
+        A user name and password authentication string.
+
+        [--jsonwrapper <outerMsgJSONwrapper>]
+        An optional outer wrapper for the JSON payload.
+
+        [--quiet]                                       
+        If specified, only echo the final JSON payload returned
+        from remote server.
+
+        [--raw]
+        If specified, do not wrap return data from remote call in a 
+        JSON wrapper.
+
+        [--oneShot]
+        If specified, transmit a shutdown control sequence to remote server
+        after communicating. This of course only works for services that
+        understand the shutdown protocol.
+
+        [--man <help>]
+        Provide detailed help on various topics.
+
+        [-x|--desc]                                     
+        Provide an overview help page.
+
+        [-y|--synopsis]
+        Provide a synopsis help summary.
+
+        [--content-type <type>]                         
+        Curl content-type descriptor.
+     
+        [--jsonpprintindent <indent>]                   
+        If specified, print return JSON payload from remote service using
+        <indent> indentation.
+
+        [--httpResponseBodyParse]                       
+        If specified, interpret the return payload as encapsulated in an
+        http response.
+
+        [--unverifiedCerts]                             
+        If specified, allows transmission of https requests with self signed SSL
+        certificates.
+
+        [--authToken <token>]
+        A token to transmit with an http request.
+
+        [--version]
+        Print internal version number and exit.
+
+        [-v|--verbosty <level>]
+        Set the verbosity level. "0" typically means no/minimal output. Allows for
+        more fine tuned output control as opposed to '--quiet' that effectively
+        silences everything.
+
+        --msg <JSONpayload>
+        The actual JSON formatted payload to transmit to remote service.
+
+
+    EXAMPLES
+
+    Say 'hello' to a ``pman`` service listening on the localhost at port 5010:
+
+            pfurl                                                   \\
+                --verb POST --raw                                   \\
+                --http 127.0.0.1:5010/api/v1/cmd                     \\
+                --jsonwrapper 'payload'                             \\
+                --msg                                               \\
+                    '{  "action": "hello",
+                            "meta": {
+                                    "askAbout":     "sysinfo",
+                                    "echoBack":     "Hi there!"
+                            }
+                    }' --quiet --jsonpprintindent 4 
+
+    and print response "prettily" using an indent of 4.
+
+    '''
+    if ab_shortOnly:
+        return shortSynopsis
+    else:
+        return shortSynopsis + description
 
 parser  = ArgumentParser(description = str_desc, formatter_class = RawTextHelpFormatter)
 
@@ -126,6 +277,20 @@ parser.add_argument(
     default = ''
 )
 parser.add_argument(
+    "-x", "--desc",
+    help    = "long synopsis",
+    dest    = 'desc',
+    action  = 'store_true',
+    default = False
+)
+parser.add_argument(
+    "-y", "--synopsis",
+    help    = "short synopsis",
+    dest    = 'synopsis',
+    action  = 'store_true',
+    default = False
+)
+parser.add_argument(
     '--content-type',
     help    = 'content type',
     dest    = 'contentType',
@@ -155,19 +320,34 @@ parser.add_argument(
 )
 parser.add_argument(
     '--unverifiedCerts',
-    help    = "Allows you to send https requests with self signed ssl certificates",
+    help    = "Allows transmission of https requests with self signed ssl certificates",
     dest    = 'unverifiedCerts',
     action  = 'store_true',
     default = False
 )
 parser.add_argument(
     '--authToken',
-    help    = 'Send a token for authentication with your http request',
+    help    = 'Send a token for authentication with an http request',
     dest    = 'authToken',
     action  = 'store',
     default = 'password'
 )
+parser.add_argument(
+    "-v", "--verbosity",
+    help    = "verbosity level for app",
+    dest    = 'verbosity',
+    default = "0")
+
 args    = parser.parse_args()
+
+if args.desc or args.synopsis:
+    print(str_desc)
+    if args.desc:
+        str_help     = synopsis(False)
+    if args.synopsis:
+        str_help     = synopsis(True)
+    print(str_help)
+    sys.exit(1)
 
 if args.b_version:
     print("Version: %s" % str_version)
@@ -189,6 +369,7 @@ pfurl  = pfurl.Pfurl(
     name                        = str_name,
     version                     = str_version,
     startFromCLI                = True,
+    verbosity                   = args.verbosity,
     unverifiedCerts             = args.unverifiedCerts,
     authToken                   = args.authToken
     )

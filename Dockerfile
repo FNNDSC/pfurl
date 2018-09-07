@@ -29,7 +29,7 @@ MAINTAINER fnndsc "dev@babymri.org"
 ARG UID=1001
 ENV UID=$UID
 
-COPY . /tmp/purl
+COPY . /tmp/pfurl
 COPY ./docker-entrypoint.py /dock/docker-entrypoint.py
 
 RUN apt-get update \

@@ -171,14 +171,13 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
 Examples
 ********
 
-Say 'hello' to a ``pman`` service listening on the localhost at port 5010:
-
+Say 'hello' to a ``pfcon`` service listening on the localhost at port 5005:
 
 .. code-block:: bash
 
             pfurl                                                   \\
                 --verb POST --raw                                   \\
-                --http 127.0.0.1:5010/api/v1/cmd                     \\
+                --http 127.0.0.1:5005/api/v1/cmd                     \\
                 --jsonwrapper 'payload'                             \\
                 --msg                                               \\
                     '{  "action": "hello",

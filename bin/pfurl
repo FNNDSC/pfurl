@@ -190,7 +190,7 @@ def synopsis(ab_shortOnly = False):
 
     EXAMPLES
 
-    Say 'hello' to a ``pman`` service listening on the localhost at port 5010:
+    Say 'hello' to a ``pfcon`` service listening on the localhost at port 5005:
 
             pfurl                                                   \\
                 --verb POST --raw                                   \\

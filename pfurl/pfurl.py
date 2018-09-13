@@ -544,18 +544,23 @@ class Pfurl():
 
         c = pycurl.Curl()
         c.setopt(c.URL, str_URL)
+        # pudb.set_trace()
         if self.b_unverifiedCerts:
             self.dp.qprint("Making an insecure connection with trusted host")
             c.setopt(pycurl.SSL_VERIFYPEER, 0)   
             c.setopt(pycurl.SSL_VERIFYHOST, 0)
-        if self.str_authToken:
-            header = 'Authorization: bearer %s' % self.str_authToken
-            c.setopt(pycurl.HTTPHEADER, [header])
         if verbose: c.setopt(c.VERBOSE, 1)
         c.setopt(c.FOLLOWLOCATION,  1)
         c.setopt(c.WRITEFUNCTION,   response.write)
         if len(self.str_auth):
+            self.dp.qprint("Using user:password authentication <%s>" % 
+                            self.str_auth)
             c.setopt(c.USERPWD, self.str_auth)
+        elif len(self.str_authToken):
+            self.dp.qprint("Using token-based authorization <%s>" % 
+                            self.str_authToken)
+            header = 'Authorization: bearer %s' % self.str_authToken
+            c.setopt(pycurl.HTTPHEADER, [header])
         self.dp.qprint("Waiting for PULL response...", level = 1, comms ='status')
         c.perform()
         c.close()

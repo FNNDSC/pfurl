@@ -1,5 +1,5 @@
 ##################
-pfurl - v1.3.20.0
+pfurl - v1.3.20.2
 ##################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -110,9 +110,6 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--http <IP>:<port>]                            
         The address of the remote service.
 
-        [--auth <user>:<passwd>]
-        A user name and password authentication string.
-
         [--jsonwrapper <outerMsgJSONwrapper>]
         An optional outer wrapper for the JSON payload.
 
@@ -154,7 +151,11 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         certificates.
 
         [--authToken <token>]
-        A token to transmit with an http request.
+        A token to transmit with an http request. Note, you if you set an 
+        --authToken, then you should NOT also set an --auth.
+
+        [--auth <user>:<passwd>]
+        A user name and password authentication string.
 
         [--version]
         Print internal version number and exit.

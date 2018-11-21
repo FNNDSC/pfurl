@@ -629,7 +629,7 @@ class Pfurl():
 
         This pulls a compressed path from a remote host/location.
 
-        Zip archives are univerally unpacked to
+        Zip archives are universally unpacked to
 
             /tmp/unpack-<uuid.uuid4()>
 

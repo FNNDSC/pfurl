@@ -160,7 +160,7 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--version]
         Print internal version number and exit.
 
-        [-v|--verbosty <level>]
+        [-v|--verbosity <level>]
         Set the verbosity level. "0" typically means no/minimal output. Allows for
         more fine tuned output control as opposed to '--quiet' that effectively
         silences everything.

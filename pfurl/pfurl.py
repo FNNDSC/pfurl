@@ -902,18 +902,22 @@ class Pfurl():
             str_msg         = json.dumps(d_msg)
         response            = io.BytesIO()
 
-
         str_colon_port = ''
         if str_port:
             str_colon_port = ':' + str_port
         
-        self.dp.qprint("%s://%s%s%s" % (self.str_protocol, str_ip, str_colon_port, self.str_URL) + '\n '+ str(d_msg),
-                    comms  = 'tx')
+        self.dp.qprint(
+            "%s://%s%s%s" % \
+                (self.str_protocol, str_ip, str_colon_port, self.str_URL)   + 
+            '\n '                                                           + 
+            str(d_msg),
+            comms  = 'tx')
 
         c = pycurl.Curl()
         c.setopt(c.POST, 1)
         # c.setopt(c.URL, "%s://%s:%s/api/v1/cmd/" % (str_ip, str_port))
         c.setopt(c.URL, "%s://%s:%s%s" % (self.str_protocol, str_ip, str_port, self.str_URL))
+
         if self.b_unverifiedCerts:
             self.dp.qprint("Attempting an insecure connection with trusted host")
             c.setopt(pycurl.SSL_VERIFYPEER, 0)   
@@ -922,6 +926,7 @@ class Pfurl():
         if self.str_authToken:
             header = 'Authorization: bearer %s' % self.str_authToken
             c.setopt(pycurl.HTTPHEADER, [header])
+
         if str_fileToProcess:
             self.dp.qprint("Building form-based multi-part message...", level = 1, comms ='status')
             fread               = open(str_fileToProcess, "rb")
@@ -1339,7 +1344,7 @@ class Pfurl():
                     d_ret = self.pull_core(msg = self.d_msg)
                 if self.str_verb == 'POST':
                     d_ret = self.push_core(self.d_msg)
-            str_stdout      = json.dumps(d_ret)
+            str_stdout      = json.dumps(d_ret, indent = 4, sort_keys = True)
         else:
             d_ret = self.pull_core()
             str_stdout  = '%s' % d_ret

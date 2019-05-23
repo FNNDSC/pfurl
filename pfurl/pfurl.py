@@ -584,14 +584,19 @@ class Pfurl():
 
         str_response = self.pull_core(msg = d_msg)
 
-        if len(str_response) < 800:
+        # The length of str_response check is probably not the best way to try
+        # and flag errors. 
+        # CHECK HERE FIRST IN DEBUGGING IF THINGS GO SOUTH!!
+        if len(str_response) < 600:
             # It's possible an error occurred for the response to be so short.
             # Try and json load, and examine for 'status' field.
             b_response      = False
             b_status        = False
             try:
                 if self.b_httpResponseBodyParse:
-                    d_response  = json.loads(self.httpResponse_bodyParse(response = str_response))
+                    d_response  = json.loads(
+                        self.httpResponse_bodyParse(response = str_response)
+                    )
                 else:
                     d_response  = str_response
                 b_response  = True
@@ -660,7 +665,7 @@ class Pfurl():
                                     'remoteServer':     {},
                                     'localOp':          {}
                                   }
-
+        # pudb.set_trace()
         # Unpack dir stuff...
         str_uuid                = uuid.uuid4()
         str_unpackDir           = '/tmp/unpack-%s' % str_uuid

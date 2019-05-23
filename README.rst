@@ -1,5 +1,5 @@
 ##################
-pfurl - v1.3.20.6
+pfurl - v1.3.20.8
 ##################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -80,7 +80,7 @@ To deactivate virtual env:
 Using the ``fnndsc/pfurl`` container
 ====================================
 
-The easiest option however, is to just use the ``fnndsc/pfurl`` dock.
+The easiest option however, is to just use the ``fnndsc/pfurl`` container image.
 
 .. code-block:: bash
 
@@ -90,7 +90,14 @@ and then run
 
 .. code-block:: bash
 
-    docker run --name pfurl fnndsc/pfurl --VERB POST --raw --http localhost:5055/api/v1/cmd --httpResponseBodyParse --msg '{}'
+    docker run --rm --name pfurl fnndsc/pfurl   \
+               --VERB POST --raw                \
+               --http localhost:5055/api/v1/cmd \
+               --httpResponseBodyParse --msg '
+               {
+                    "someJSONmessage": "Whatever"
+               }
+               '
 
 where the ``msg`` contains JSON syntax instructions of what to perform.
 

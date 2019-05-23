@@ -22,7 +22,7 @@ str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostn
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "1.3.20.6"
+str_version = "1.3.20.8"
 str_desc    = Colors.CYAN + """
 
         __            _ 
@@ -42,13 +42,15 @@ str_desc    = Colors.CYAN + """
                               -- version """ + \
            Colors.YELLOW + str_version + Colors.CYAN + """ --
            
-    'pfurl' sends REST conforming commands and data to remote services, similar
-    in some ways to the well-known CLI tool, 'curl' or the Python tool, 'httpie'
+    'pfurl' sends REST conforming commands and data to remote services, 
+    similar in some ways to the well-known CLI tool, 'curl' or the Python 
+    tool, 'httpie'.
     
-    'pfurl' not only sends curl type payloads, but can also zip and unzip entire
-    directories of files for transmission and reception.
+    'pfurl' not only sends curl type payloads, but can also zip/unzip 
+    entire directories of files for transmission and reception.
     
-    'pfurl' is designed to be part of the ChRIS/CHIPS framework.
+    'pfurl' is designed to be part of the ChRIS framework but can also be
+    used in similar use cases to 'curl' or 'httpie'.
     
 """ + \
            Colors.RED +  """

@@ -1315,7 +1315,7 @@ class Pfurl():
             if k == 'response': str_response    = v
         try:
             str_body        = str_response.split('\r\n\r\n')[1]
-            d_body          = yaml.load(str_body)
+            d_body          = yaml.load(str_body, Loader=yaml.FullLoader)
             str_body        = json.dumps(d_body)
         except:
             str_body        = str_response

@@ -928,11 +928,12 @@ class Pfurl():
             c.setopt(pycurl.SSL_VERIFYPEER, 0)   
             c.setopt(pycurl.SSL_VERIFYHOST, 0)
 
+        headers = []
         if self.str_authToken:
-            header = 'Authorization: bearer %s' % self.str_authToken
-            c.setopt(pycurl.HTTPHEADER, [header])
+            headers.append('Authorization: bearer %s' % self.str_authToken)
 
         if str_fileToProcess:
+            headers.append('File: true')
             self.dp.qprint("Building form-based multi-part message...", level = 1, comms ='status')
             fread               = open(str_fileToProcess, "rb")
             filesize            = os.path.getsize(str_fileToProcess)
@@ -943,6 +944,7 @@ class Pfurl():
             c.setopt(c.READFUNCTION,    fread.read)
             c.setopt(c.POSTFIELDSIZE,   filesize)
         else:
+            headers.append('File: false')
             self.dp.qprint("Sending control message...", level = 1, comms ='status')
             # c.setopt(c.HTTPPOST, [
             #                         ("d_msg",    str_msg),
@@ -951,7 +953,8 @@ class Pfurl():
             c.setopt(c.POSTFIELDS, str_msg)
         if verbose: c.setopt(c.VERBOSE, 1)
         # print(self.str_contentType)
-        if len(self.str_contentType):   c.setopt(c.HTTPHEADER, ['Content-type: %s' % self.str_contentType])
+        if len(self.str_contentType):   headers.append('Content-type: %s' % self.str_contentType)
+        c.setopt(pycurl.HTTPHEADER, headers)
         c.setopt(c.WRITEFUNCTION,   response.write)
         if len(self.str_auth):
             c.setopt(c.USERPWD, self.str_auth)

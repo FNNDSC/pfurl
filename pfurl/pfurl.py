@@ -1,8 +1,27 @@
 #!/usr/bin/env python3
 
 '''
+        __            _ 
+       / _|          | |
+ _ __ | |_ _   _ _ __| |
+| '_ \|  _| | | | '__| |
+| |_) | | | |_| | |  | |
+| .__/|_|  \__,_|_|  |_|
+| |                     
+|_|                     
 
-pfurl - path-file url module
+                            Process-File-over-URL
+
+    'pfurl' sends REST conforming commands and data to remote services, 
+    similar in some ways to the well-known CLI tool, 'curl' or the Python 
+    tool, 'httpie'.
+    
+    'pfurl' not only sends curl type payloads, but can also zip/unzip 
+    entire directories of files for transmission and reception.
+    
+    'pfurl' is designed to be part of the ChRIS framework but can also be
+    used in similar use cases to 'curl' or 'httpie'.
+
 
 '''
 
@@ -39,32 +58,6 @@ Gb_startFromCLI             = False
 class Pfurl():
 
     ''' Represents an example client. '''
-
-    def qprint(self, msg, **kwargs):
-
-        str_comms  = "status"
-        for k,v in kwargs.items():
-            if k == 'comms':    str_comms  = v
-
-        if self.b_useDebug:
-            write   = self.debug
-        else:
-            write   = print
-
-        str_caller  = inspect.stack()[1][3]
-
-        if not self.b_quiet:
-            if not self.b_useDebug:
-                if str_comms == 'status':   write(Colors.PURPLE,    end="")
-                if str_comms == 'error':    write(Colors.RED,       end="")
-                if str_comms == "tx":       write(Colors.YELLOW + "---->")
-                if str_comms == "rx":       write(Colors.GREEN  + "<----")
-                write('%s' % datetime.datetime.now() + " ",       end="")
-            write(' | ' + os.path.basename(__file__) + ':' +  self.__name__ + "." + str_caller + '() | ' + msg)
-            if not self.b_useDebug:
-                if str_comms == "tx":       write(Colors.YELLOW + "---->")
-                if str_comms == "rx":       write(Colors.GREEN  + "<----")
-                write(Colors.NO_COLOUR, end="")
 
     def col2_print(self, str_left, str_right):
         print(Colors.WHITE +
@@ -117,6 +110,11 @@ class Pfurl():
         self.str_desc                   = ''
         self.b_unverifiedCerts          = False
         self.str_authToken              = ''
+
+        # Curl stuff
+        self.c                          = None
+        self.buffer                     = None
+        self.HTTPheaders                = []
 
         for key,val in kwargs.items():
             if key == 'msg':
@@ -516,13 +514,14 @@ class Pfurl():
 
     def pull_core(self, **kwargs):
         """
-        Just the core of the pycurl logic.
+        Core method that interacts with the pycurl module
         """
 
         str_ip              = self.str_ip
         str_port            = self.str_port
         verbose             = 0
         d_msg               = {}
+        str_query           = ''
 
         for k,v in kwargs.items():
             if k == 'ip':       str_ip      = v
@@ -530,104 +529,70 @@ class Pfurl():
             if k == 'msg':      d_msg       = v
             if k == 'verbose':  verbose     = v
 
-        response            = io.BytesIO()
-
-        str_query   = ''
         if len(d_msg):
-            d_meta              = d_msg['meta']
             str_query           = '?%s' % urllib.parse.urlencode(d_msg)
         
-        str_URL = "%s://%s:%s%s%s" % (self.str_protocol, str_ip, str_port, self.str_URL, str_query)
-        self.dp.qprint(str_URL,
-                    comms  = 'tx')
+        self.curl_init(verbose  = verbose)
+        self.curl_URL_resolveAndSet(d_msg, str_ip, str_port, str_query)        
+        self.curl_unverifiedCerts_checkAndSet()
 
+        d_ret               = self.curl_doCall()
+        self.dp.qprint('Incoming transmission received, length = %s' % 
+                        "{:,}".format(sys.getsizeof(d_ret)),
+                        level = 1, 
+                        comms = 'rx')
+        return d_ret
 
-        c = pycurl.Curl()
-        c.setopt(c.URL, str_URL)
-        # pudb.set_trace()
-        if self.b_unverifiedCerts:
-            self.dp.qprint("Making an insecure connection with trusted host")
-            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
-            c.setopt(pycurl.SSL_VERIFYHOST, 0)
-        if verbose: c.setopt(c.VERBOSE, 1)
-        c.setopt(c.FOLLOWLOCATION,  1)
-        c.setopt(c.WRITEFUNCTION,   response.write)
-        if len(self.str_auth):
-            self.dp.qprint("Using user:password authentication <%s>" % 
-                            self.str_auth)
-            c.setopt(c.USERPWD, self.str_auth)
-        elif len(self.str_authToken):
-            self.dp.qprint("Using token-based authorization <%s>" % 
-                            self.str_authToken)
-            header = 'Authorization: bearer %s' % self.str_authToken
-            c.setopt(pycurl.HTTPHEADER, [header])
-        self.dp.qprint("Waiting for PULL response...", level = 1, comms ='status')
-        c.perform()
-        c.close()
-        try:
-            str_response        = response.getvalue().decode()
-        except:
-            str_response        = response.getvalue()
-
-        self.dp.qprint('Incoming transmission received, length = %s' % "{:,}".format(len(str_response)),
-                    level = 1, comms ='rx')
-        return str_response
 
     def pullPath_core(self, **kwargs):
         """
-        Just the core of the pycurl logic.
+        The core 'path' pulling related processing
         """
 
         d_msg       = self.d_msg
+        d_ret       = {}
         for k,v in kwargs.items():
             if k == 'd_msg':    d_msg   = v
 
         str_response = self.pull_core(msg = d_msg)
 
-        # The length of str_response check is probably not the best way to try
-        # and flag errors. 
-        # CHECK HERE FIRST IN DEBUGGING IF THINGS GO SOUTH!!
-        if len(str_response) < 600:
-            # It's possible an error occurred for the response to be so short.
-            # Try and json load, and examine for 'status' field.
-            b_response      = False
-            b_status        = False
-            try:
-                if self.b_httpResponseBodyParse:
-                    d_response  = json.loads(
-                        self.httpResponse_bodyParse(response = str_response)
-                    )
-                else:
-                    d_response  = str_response
-                b_response  = True
-                b_status    = d_response['status']
-                str_error   = d_response
-            except:
-                str_error   = str_response
-            if not b_status or 'Network Error' in str_response:
-                self.dp.qprint('Some error occurred at remote location:',
-                            level = 1, comms ='error')
-                return {'status':       False,
-                        'msg':          'PULL unsuccessful',
-                        'response':     str_error,
-                        'timestamp':    '%s' % datetime.datetime.now(),
-                        'size':         "{:,}".format(len(str_response))}
-            else:
-                return {'status':       d_response['status'],
-                        'msg':          'PULL successful',
-                        'response':     d_response,
-                        'timestamp':    '%s' % datetime.datetime.now(),
-                        'size':         "{:,}".format(len(str_response))}
+        self.dp.qprint(
+            "Received "                         + 
+            Colors.YELLOW                       + 
+            "{:,}".format(len(str_response))    +
+            Colors.PURPLE                       + 
+            " bytes...",
+            level = 1, 
+            comms = 'status'
+        )
 
-        self.dp.qprint("Received " + Colors.YELLOW + "{:,}".format(len(str_response)) +
-                    Colors.PURPLE + " bytes..." ,
-                    level = 1, comms ='status')
+        b_status        = False
+        if isinstance(str_response, dict):
+            d_response  = str_response
+            b_status    = d_response['status']
+            str_error   = d_response
+        else:
+            str_error   = str_response
+        if not b_status or 'Network Error' in str_response:
+            self.dp.qprint('Some error occurred at remote location:',
+                        level = 1, comms ='error')
+            d_ret = {
+                    'status':       False,
+                    'msg':          'PULL unsuccessful',
+                    'response':     str_error,
+                    'timestamp':    '%s' % datetime.datetime.now(),
+                    'size':         "{:,}".format(len(str_response))
+                    }
+        else:
+            d_ret = {
+                    'status':       d_response['status'],
+                    'msg':          'PULL successful',
+                    'response':     d_response,
+                    'timestamp':    '%s' % datetime.datetime.now(),
+                    'size':         "{:,}".format(len(str_response))
+                    }
 
-        return {'status':       True,
-                'msg':          'PULL successful',
-                'response':     str_response,
-                'timestamp':    '%s' % datetime.datetime.now(),
-                'size':         "{:,}".format(len(str_response))}
+        return d_ret
 
     def pullPath_compress(self, d_msg, **kwargs):
         """
@@ -685,8 +650,10 @@ class Pfurl():
         # Pull the actual data into a dictionary holder
         d_pull                  = self.pullPath_core()
         d_ret['remoteServer']   = d_pull
-        str_response            = d_pull['response']
+        str_response            = d_pull['response']['data']
         d_pull['response']      = '<truncated>'
+
+        # pudb.set_trace()
 
         if not d_pull['status']:
             if 'stdout' in d_pull:
@@ -883,9 +850,225 @@ class Pfurl():
                 'status':       d_ret['status'],
                 'timestamp':    '%s' % datetime.datetime.now()}
 
+    def curl_URL_resolveAndSet(self, d_msg, str_ip, str_port, str_query = ''):
+        """
+        Resolve the remote URL with optional port spec and set the 
+        corresponding curl option.
+        """
+        str_colon_port = ''
+        if str_port:
+            str_colon_port = ':' + str_port
+        
+        str_URLfull = "%s://%s%s%s%s" % \
+                    (   
+                        self.str_protocol, 
+                        str_ip, 
+                        str_colon_port, 
+                        self.str_URL,
+                        str_query
+                    )
+        self.dp.qprint(
+            str_URLfull     + 
+            '\n '           + 
+            json.dumps(d_msg, indent = 4),
+            comms   = 'tx')
+
+        self.c.setopt(pycurl.URL, str_URLfull)
+        return str_URLfull                    
+
+    def curl_init(self, **kwargs):
+        """
+        Initialize the curl object and perform some 
+        optional header initializations as well as 
+        some ON/OFF settings.
+        """
+        verbose     = 0
+        self.c      = pycurl.Curl()
+        self.buffer = io.BytesIO()
+        self.c.setopt(pycurl.WRITEFUNCTION,   self.buffer.write)
+        self.c.setopt(pycurl.FOLLOWLOCATION,  1)
+        if self.str_authToken:
+            self.dp.qprint("Using token-based authorization <%s>" % 
+                            self.str_authToken)
+            self.HTTPheaders.append('Authorization: bearer %s' % self.str_authToken)
+        if len(self.str_contentType):   
+            self.HTTPheaders.append('Content-type: %s' % self.str_contentType)
+        if len(self.str_auth):
+            self.dp.qprint("Using user:password authentication <%s>" % 
+                            self.str_auth)
+            self.c.setopt(pycurl.USERPWD, self.str_auth)
+        for k,v in kwargs.items():
+            if k    == 'optON':     self.curl_setopt(optListON  = v)
+            if k    == 'optOFF':    self.curl_setopt(optListOFF = v)
+            if k    == 'verbose':   self.c.setopt(self.c.VERBOSE, verbose)
+
+    def curl_fileTXModeViaForm_set(self, str_msg, str_fileToProcess):
+        """
+        Configure curl for file tranmission via a FORM
+        """
+        self.HTTPheaders.append('Mode: file')
+        self.dp.qprint("Building form-based multi-part message...", 
+                        level = 1, 
+                        comms ='status')
+        fread               = open(str_fileToProcess, "rb")
+        filesize            = os.path.getsize(str_fileToProcess)
+        self.c.setopt(
+                        pycurl.HTTPPOST, 
+                        [  
+                            ("d_msg",       str_msg),
+                            ("filename",    str_fileToProcess),
+                            ("local",       (pycurl.FORM_FILE, str_fileToProcess))
+                        ]
+                    )
+        self.c.setopt(pycurl.READFUNCTION,    fread.read)
+        self.c.setopt(pycurl.POSTFIELDSIZE,   filesize)
+        self.dp.qprint("Transmitting "                                      +  
+                        Colors.YELLOW                                       +  
+                        "{:,}".format(os.stat(str_fileToProcess).st_size)   + 
+                        Colors.PURPLE + " bytes...",
+                        level = 1, 
+                        comms = 'status')
+
+    def curl_controlMode_set(self, str_msg):
+        self.HTTPheaders.append('Mode: control')
+        self.dp.qprint("Sending control message...", 
+                        level = 1, 
+                        comms = 'status')
+        self.c.setopt(pycurl.POSTFIELDS, str_msg)
+
+    def curl_setopt(self, **kwargs):
+        """
+        Set curl object parameters.
+        """
+        l_optON     = []
+        l_optOFF    = []
+        d_opt       = {}
+        for k,v in kwargs.items():
+            if k == 'optListON':    l_optON     = v
+            if k == 'optListOFF':   l_optOFF    = v
+            if k == 'optDict':      d_opt       = v
+
+        for on in l_optON:
+            self.c.setopt(on, 1)
+
+        for off in l_optOFF:
+            self.c.setopt(off, 0)
+        
+        if d_opt:
+            for k,v in d_opt.items():
+                self.c.setopt(k, v)
+
+    def curl_unverifiedCerts_checkAndSet(self):
+        if self.b_unverifiedCerts:
+            self.dp.qprint("Attempting an insecure connection with trusted host...")
+            self.curl_setopt(d_opt  = {
+                pycurl.SSL_VERIFYPEER:  0,
+                pycurl.SSL_VERIFYHOST:  0
+            })
+
+    def curl_doCall(self):
+        """
+        Try the actual curl call and return a string response (or string
+        exception)
+        """
+        d_ret   = {
+                    'status':       False,
+                    'data':         ''
+                }
+        self.c.setopt(pycurl.HTTPHEADER, self.HTTPheaders)
+        try:
+            self.c.perform()
+        except Exception as e:
+            str_exception       = str(e)
+            self.dp.qprint('Curl perform failure error trapped: %s' % 
+                            str_exception, 
+                            comms = 'error')
+            d_ret['status']     = False
+            d_ret['data']       = self.buffer.getvalue()
+            d_ret['exception']  = str_exception
+        try:
+            str_data            = self.buffer.getvalue().decode()
+            d_ret['status']     = True
+            d_ret['data']       = str_data
+        except:
+            try:
+                d_ret['data']       = self.buffer.getvalue()
+                d_ret['status']     = True
+            except Exception as e:
+                str_exception       = str(e)
+                d_ret['status']     = False
+                d_ret['exception']  = str_exception
+        
+        self.c.close()
+        return d_ret
+
+    def curl_responseProcess(self, d_curlResponse):
+        """
+        Process the curl return
+        """
+        d_ret   = {'status':    False}
+
+        if d_curlResponse['status']:
+            response    = d_curlResponse['data']
+            if isinstance(response, dict):
+                self.dp.qprint(
+                        "Response from curl:\n%s" % json.dumps(response, indent = 4), 
+                        level   = 1, 
+                        comms   ='status')
+            else:
+                self.dp.qprint(
+                        "Response from curl: %s" % response, 
+                        level   = 1, 
+                        comms   = 'status')
+            if self.b_raw:
+                try:
+                    if self.b_httpResponseBodyParse:
+                        d_ret   = json.loads(
+                                self.httpResponse_bodyParse(response = response)
+                        )   
+                    else:
+                        d_ret   = json.loads(response)
+                except:
+                    d_ret           = response
+            else:
+                try:
+                    d_ret['stdout']     = json.loads(response)
+                except:
+                    d_ret['stdout']     = response
+                if 'status' in d_ret['stdout']:
+                    d_ret['status']     = d_ret['stdout']['status']
+                d_ret['msg']            = 'push OK.'
+
+            if isinstance(d_ret, object):
+                self.dp.qprint(json.dumps(d_ret, sort_keys=True, indent=4), 
+                                level   = 1, 
+                                comms   = 'rx')
+            if isinstance(d_ret, str):
+                self.dp.qprint(d_ret, 
+                                level   = 1, 
+                                comms   = 'rx')
+        return d_ret
+
+    def msg_toStr(self, d_msg):
+        """
+        Convert the d_msg to string and remove the outer jsonwrapper
+        if it exists.
+        """
+        if len(self.str_jsonwrapper):
+            str_msg         = json.dumps({self.str_jsonwrapper: d_msg})
+        else:
+            str_msg         = json.dumps(d_msg)
+        return str_msg
+
     def push_core(self, d_msg, **kwargs):
         """
+        The core logic of the communication "push" to the remote server.
 
+        File contents are transmitted in a FORM, while meta-control type
+        directives are posted in the message body directly.
+
+        Note that most of the configuration of the curl object is handled 
+        by other methods (see the curl_* above).
         """
 
         str_fileToProcess   = ""
@@ -894,6 +1077,8 @@ class Pfurl():
         str_port            = self.str_port
         verbose             = 0
 
+        # pudb.set_trace()
+
         for k,v in kwargs.items():
             if k == 'fileToPush':   str_fileToProcess   = v
             if k == 'd_ret':        d_ret               = v
@@ -901,110 +1086,24 @@ class Pfurl():
             if k == 'port':         str_port            = v
             if k == 'verbose':      verbose             = v
 
-        if len(self.str_jsonwrapper):
-            str_msg         = json.dumps({self.str_jsonwrapper: d_msg})
-        else:
-            str_msg         = json.dumps(d_msg)
-        response            = io.BytesIO()
+        str_msg             = self.msg_toStr(d_msg)
+        self.curl_init(
+                        optON       = [pycurl.POST],
+                        verbose     = verbose
+                    )
 
-        str_colon_port = ''
-        if str_port:
-            str_colon_port = ':' + str_port
-        
-        self.dp.qprint(
-            "%s://%s%s%s" % \
-                (self.str_protocol, str_ip, str_colon_port, self.str_URL)   + 
-            '\n '                                                           + 
-            str(d_msg),
-            comms  = 'tx')
+        self.curl_URL_resolveAndSet(d_msg, str_ip, str_port)
+        self.curl_unverifiedCerts_checkAndSet()
 
-        c = pycurl.Curl()
-        c.setopt(c.POST, 1)
-        # c.setopt(c.URL, "%s://%s:%s/api/v1/cmd/" % (str_ip, str_port))
-        c.setopt(c.URL, "%s://%s:%s%s" % (self.str_protocol, str_ip, str_port, self.str_URL))
+        if str_fileToProcess:   self.curl_fileTXModeViaForm_set(str_msg, str_fileToProcess)
+        else:                   self.curl_controlMode_set(str_msg)
 
-        if self.b_unverifiedCerts:
-            self.dp.qprint("Attempting an insecure connection with trusted host")
-            c.setopt(pycurl.SSL_VERIFYPEER, 0)   
-            c.setopt(pycurl.SSL_VERIFYHOST, 0)
-
-        headers = []
-        if self.str_authToken:
-            headers.append('Authorization: bearer %s' % self.str_authToken)
-
-        if str_fileToProcess:
-            headers.append('File: true')
-            self.dp.qprint("Building form-based multi-part message...", level = 1, comms ='status')
-            fread               = open(str_fileToProcess, "rb")
-            filesize            = os.path.getsize(str_fileToProcess)
-            c.setopt(c.HTTPPOST, [  ("local",       (c.FORM_FILE, str_fileToProcess)),
-                                    ("d_msg",       str_msg),
-                                    ("filename",    str_fileToProcess)]
-                     )
-            c.setopt(c.READFUNCTION,    fread.read)
-            c.setopt(c.POSTFIELDSIZE,   filesize)
-        else:
-            headers.append('File: false')
-            self.dp.qprint("Sending control message...", level = 1, comms ='status')
-            # c.setopt(c.HTTPPOST, [
-            #                         ("d_msg",    str_msg),
-            #                      ]
-            #          )
-            c.setopt(c.POSTFIELDS, str_msg)
-        if verbose: c.setopt(c.VERBOSE, 1)
-        # print(self.str_contentType)
-        if len(self.str_contentType):   headers.append('Content-type: %s' % self.str_contentType)
-        c.setopt(pycurl.HTTPHEADER, headers)
-        c.setopt(c.WRITEFUNCTION,   response.write)
-        if len(self.str_auth):
-            c.setopt(c.USERPWD, self.str_auth)
-        if str_fileToProcess:
-            self.dp.qprint("Transmitting " + Colors.YELLOW + "{:,}".format(os.stat(str_fileToProcess).st_size) + \
-                        Colors.PURPLE + " bytes...",
-                        level = 1, comms ='status')
-        else:
-            self.dp.qprint("Sending data...",
-                        level = 1, comms ='status')
-        try:
-            c.perform()
-            str_response        = response.getvalue().decode()
-        except Exception as e:
-            str_exception   = str(e)
-            self.dp.qprint('Exception trapped: %s' % str_exception)
-            str_response    = str_exception
-        c.close()
-
-        if isinstance(str_response, dict):
-            self.dp.qprint("Response from call:\n%s" % self.pp.pformat(str_response).strip(), level = 1, comms ='status')
-        else:
-            self.dp.qprint('Response from call: %s' % str_response, level = 1, comms ='status')
-        if self.b_raw:
-            try:
-                if self.b_httpResponseBodyParse:
-                    d_ret  = json.loads(self.httpResponse_bodyParse(response = str_response))
-                else:
-                    d_ret   = json.loads(str_response)
-            except:
-                d_ret           = str_response
-        else:
-            try:
-                d_ret['stdout']     = json.loads(str_response)
-            except:
-                d_ret['stdout']     = str_response
-            if 'status' in d_ret['stdout']:
-                d_ret['status']     = d_ret['stdout']['status']
-            d_ret['msg']        = 'push OK.'
-
-        if isinstance(d_ret, object):
-            self.dp.qprint(json.dumps(d_ret, sort_keys=True, indent=4), level = 1, comms ='rx')
-        if isinstance(d_ret, str):
-            self.dp.qprint(d_ret, level = 1, comms ='rx')
-
+        d_ret               = self.curl_responseProcess(self.curl_doCall())
         return d_ret
 
     def pushPath_core(self, d_msg, **kwargs):
         """
-
+        Core logic for pushing a path (fileToProcess)
         """
 
         str_fileToProcess   = ""
@@ -1031,8 +1130,6 @@ class Pfurl():
     def pushPath_compress(self, d_msg, **kwargs):
         """
         """
-
-        # 
 
         d_meta              = d_msg['meta']
         str_meta            = json.dumps(d_meta)
@@ -1107,22 +1204,27 @@ class Pfurl():
             if os.path.isfile(str_zipFile):     os.remove(str_zipFile)
             if os.path.isfile(str_base64File):  os.remove(str_base64File)
 
-        self.dp.qprint("Returning: %s" % self.pp.pformat(d_ret).strip(), level = 1, comms ='status')
+        self.dp.qprint("Returning: %s" % json.dumps(d_ret, indent = 4), 
+                        level = 1, 
+                        comms = 'status')
         if 'status' in d_ret['remoteServer']:
-            d_ret['status'] = d_ret['remoteServer']['status']
-            d_ret['msg']    = d_ret['remoteServer']['msg']
+            try:
+                d_ret['status'] = d_ret['remoteServer']['status']
+                d_ret['msg']    = d_ret['remoteServer']['msg']
+            except:
+                self.dp.qprint("Error from server: \n%s" % d_ret, 
+                                comms = 'error')
         else:
             if type(d_ret['remoteServer']) is dict:
                 d_ret['status'] = d_ret['remoteServer']['decode']['status']
                 d_ret['msg'] = d_ret['remoteServer']['decode']['msg']
             else:
-                d_ret['msg'] = "Invalid response from server"
+                d_ret['msg'] = "Invalid response from remote server"
                 d_ret['status'] = False
-                d_ret['remoteServer'] = {
-                    'status':  False,
-                    'msg': 'TypeError: Invalid response',
-                    'str_error': d_ret['str_error']
-                }
+                response  = d_ret['remoteServer']
+                d_ret['remoteServer']   = {}
+                d_ret['remoteServer']['status']     = False
+                d_ret['remoteServer']['response']   = response
 
         return d_ret
 

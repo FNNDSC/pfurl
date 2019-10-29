@@ -42,6 +42,8 @@ import  shutil
 import  inspect
 import  glob
 
+from    urllib.parse        import urlparse
+
 # import  codecs
 
 import  pudb
@@ -115,6 +117,7 @@ class Pfurl():
         self.c                          = None
         self.buffer                     = None
         self.HTTPheaders                = []
+        self.str_httpProxy              = ''
 
         for key,val in kwargs.items():
             if key == 'msg':
@@ -144,6 +147,7 @@ class Pfurl():
             if key == 'desc':                       self.str_desc                   = val
             if key == 'unverifiedCerts':            self.b_unverifiedCerts          = val
             if key == 'authToken':                  self.str_authToken              = val
+            if key == 'httpProxy':                  self.str_httpProxy              = val
 
         self.dp                         = pfmisc.debug(    
                                             verbosity   = self.verbosity,
@@ -897,6 +901,13 @@ class Pfurl():
             self.dp.qprint("Using user:password authentication <%s>" % 
                             self.str_auth)
             self.c.setopt(pycurl.USERPWD, self.str_auth)
+        if len(self.str_httpProxy):
+            o_url   = urlparse(self.str_httpProxy)
+            self.c.setopt(pycurl.PROXY,     o_url.hostname)
+            self.c.setopt(pycurl.PROXYPORT, o_url.port)
+            if o_url.scheme == 'http' or not len(o_url.scheme):
+                self.c.setopt(pycurl.PROXYTYPE, pycurl.PROXYTYPE_HTTP)
+
         for k,v in kwargs.items():
             if k    == 'optON':     self.curl_setopt(optListON  = v)
             if k    == 'optOFF':    self.curl_setopt(optListOFF = v)

@@ -22,7 +22,7 @@ str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostn
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "2.1.0.2"
+str_version = "2.1.1.2"
 str_desc    = Colors.CYAN + """
 
         __            _ 
@@ -76,6 +76,7 @@ def synopsis(ab_shortOnly = False):
             pfurl                                                   \\
                     [--verb <RESTVERB>]                             \\
                     [--http <IP>:<port>]                            \\
+                    [--httpProxy [<proto>://]<IP>[:<port>]]         \\
                     [--auth <user>:<passwd>]                        \\
                     [--jsonwrapper <outerMsgJSONwrapper>]           \\
                     [--quiet]                                       \\
@@ -131,6 +132,15 @@ def synopsis(ab_shortOnly = False):
 
         [--http <IP>:<port>]                            
         The address of the remote service.
+
+        [--httpProxy [<proto>://]<IP>[:<port>]]
+        If specified, instruct ``pfurl`` to use the proxy as specified.
+        Currently, only 'http' is supported. Valid values for this flag
+        include, for example:
+
+            --httProxy http://proxy.host.org:1234
+
+            --httpProxy proxy.host.org:1234
 
         [--auth <user>:<passwd>]
         A user name and password authentication string.
@@ -238,6 +248,13 @@ parser.add_argument(
     dest    = 'http',
     default = '%s:%s' % (str_defIP, str_defPort),
     help    = 'HTTP string: http://<IP>[:<port>]</some/path/>'
+)
+parser.add_argument(
+    '--httpProxy',
+    action  = 'store',
+    dest    = 'httpProxy',
+    default = '',
+    help    = 'HTTP proxy string: [http://]<IP>[:<port>]'
 )
 parser.add_argument(
     '--auth',
@@ -361,6 +378,7 @@ if args.b_version:
 pfurl  = pfurl.Pfurl(
     msg                         = args.msg,
     http                        = args.http,
+    httpProxy                   = args.httpProxy,
     verb                        = args.verb,
     contentType                 = args.contentType,
     auth                        = args.auth,

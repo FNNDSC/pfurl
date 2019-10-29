@@ -1,5 +1,5 @@
 ##################
-pfurl - v2.1.0.2
+pfurl - v2.1.1.2
 ##################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -116,6 +116,15 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
 
         [--http <IP>:<port>]                            
         The address of the remote service.
+
+        [--httpProxy [<proto>://]<IP>[:<port>]]
+        If specified, instruct ``pfurl`` to use the proxy as specified.
+        Currently, only 'http' is supported. Valid values for this flag
+        include, for example:
+
+            --httProxy http://proxy.host.org:1234
+
+            --httpProxy proxy.host.org:1234
 
         [--jsonwrapper <outerMsgJSONwrapper>]
         An optional outer wrapper for the JSON payload.

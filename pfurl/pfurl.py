@@ -891,7 +891,7 @@ class Pfurl():
         self.buffer = io.BytesIO()
         self.c.setopt(pycurl.WRITEFUNCTION,   self.buffer.write)
         self.c.setopt(pycurl.FOLLOWLOCATION,  1)
-        if self.str_authToken:
+        if len(self.str_authToken):
             self.dp.qprint("Using token-based authorization <%s>" % 
                             self.str_authToken)
             self.HTTPheaders.append('Authorization: bearer %s' % self.str_authToken)

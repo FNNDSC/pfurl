@@ -1000,7 +1000,10 @@ class Pfurl():
         try:
             str_data            = self.buffer.getvalue().decode()
             d_ret['status']     = True
-            d_ret['data']       = str_data
+            try:
+                d_ret['data']   = json.loads(str_data)
+            except:
+                d_ret['data']   = str_data
         except:
             try:
                 d_ret['data']       = self.buffer.getvalue()

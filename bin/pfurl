@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
-# (c) 2017 Fetal-Neonatal Neuroimaging & Developmental Science Center
-#                   Boston Children's Hospital
+# (c) 2017-2019 Fetal-Neonatal Neuroimaging & Developmental Science Center
+#                     Boston Children's Hospital
 #
 #              http://childrenshospital.org/FNNDSC/
 #                        dev@babyMRI.org
@@ -12,8 +12,10 @@ sys.path.insert(1, os.path.join(os.path.dirname(__file__), '..'))
 
 import  socket
 import  json
+import  ast
 import  sys
 import  pfurl
+import  pudb
 from    argparse            import RawTextHelpFormatter
 from    argparse            import ArgumentParser
 from    pfmisc._colors      import Colors
@@ -22,7 +24,7 @@ str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostn
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "2.1.1.2"
+str_version = "2.2.2.2"
 str_desc    = Colors.CYAN + """
 
         __            _ 
@@ -352,7 +354,7 @@ parser.add_argument(
     help    = 'Send a token for authentication with an http request',
     dest    = 'authToken',
     action  = 'store',
-    default = 'password'
+    default = ''
 )
 parser.add_argument(
     "-v", "--verbosity",
@@ -397,9 +399,17 @@ pfurl  = pfurl.Pfurl(
     authToken                   = args.authToken
     )
 
+str_response  = pfurl()
+
+try:
+    # Is this string response a dictionary?
+    d_response = ast.literal_eval(str_response)
+except:
+    d_response = str_response
+
 if not args.jsonpprintindent:
-    print(pfurl())
+    print(str_response)
 else:
-    print(json.dumps(json.loads(pfurl()), indent=int(args.jsonpprintindent)))
+    print(json.dumps(d_response, indent=int(args.jsonpprintindent)))
 
 sys.exit(0)

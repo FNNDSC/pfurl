@@ -1020,8 +1020,6 @@ class Pfurl():
         """
         Process the curl return
         """
-        d_ret   = {'status':    False}
-
         if d_curlResponse['status']:
             response    = d_curlResponse['data']
             if isinstance(response, dict):
@@ -1034,25 +1032,21 @@ class Pfurl():
                         "Response from curl: %s" % response, 
                         level   = 1, 
                         comms   = 'status')
+            try:
+                if self.b_httpResponseBodyParse:
+                    d_body = json.loads(self.httpResponse_bodyParse(response=response))
+                else:
+                    d_body = json.loads(response)
+            except:
+                d_body = response
             if self.b_raw:
-                try:
-                    if self.b_httpResponseBodyParse:
-                        d_ret   = json.loads(
-                                self.httpResponse_bodyParse(response = response)
-                        )   
-                    else:
-                        d_ret   = json.loads(response)
-                except:
-                    d_ret           = response
+                d_ret = d_body
             else:
-                try:
-                    d_ret['stdout']     = json.loads(response)
-                except:
-                    d_ret['stdout']     = response
-                if 'status' in d_ret['stdout']:
-                    d_ret['status']     = d_ret['stdout']['status']
-                d_ret['msg']            = 'push OK.'
-
+                d_ret = {
+                    'stdout': d_body,
+                    'msg': 'push OK.',
+                    'status': d_body['status'] if type(d_body) == dict and 'status' in d_body else False
+                }
             if isinstance(d_ret, object):
                 self.dp.qprint(json.dumps(d_ret, sort_keys=True, indent=4), 
                                 level   = 1, 

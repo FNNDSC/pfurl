@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# (c) 2017-2019 Fetal-Neonatal Neuroimaging & Developmental Science Center
+# (c) 2017-2020 Fetal-Neonatal Neuroimaging & Developmental Science Center
 #                     Boston Children's Hospital
 #
 #              http://childrenshospital.org/FNNDSC/
@@ -24,17 +24,17 @@ str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostn
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "2.2.2.2"
+str_version = "2.2.4.0"
 str_desc    = Colors.CYAN + """
 
-        __            _ 
+        __            _
        / _|          | |
  _ __ | |_ _   _ _ __| |
 | '_ \|  _| | | | '__| |
 | |_) | | | |_| | |  | |
 | .__/|_|  \__,_|_|  |_|
-| |                     
-|_|                     
+| |
+|_|
 
 
                             Process-File-over-URL
@@ -43,25 +43,25 @@ str_desc    = Colors.CYAN + """
 
                               -- version """ + \
            Colors.YELLOW + str_version + Colors.CYAN + """ --
-           
-    'pfurl' sends REST conforming commands and data to remote services, 
-    similar in some ways to the well-known CLI tool, 'curl' or the Python 
+
+    'pfurl' sends REST conforming commands and data to remote services,
+    similar in some ways to the well-known CLI tool, 'curl' or the Python
     tool, 'httpie'.
-    
-    'pfurl' not only sends curl type payloads, but can also zip/unzip 
+
+    'pfurl' not only sends curl type payloads, but can also zip/unzip
     entire directories of files for transmission and reception.
-    
+
     'pfurl' is designed to be part of the ChRIS framework but can also be
     used in similar use cases to 'curl' or 'httpie'.
-    
+
 """ + \
            Colors.RED +  """
-        
+
               +---------------------------------------------------------+
               | Use --auth <user>:<password> and --authToken <token>    |
-              |         arguments for secure communication.             |    
+              |         arguments for secure communication.             |
               +---------------------------------------------------------+
-              
+
 """ + Colors.NO_COLOUR
 
 def synopsis(ab_shortOnly = False):
@@ -69,7 +69,7 @@ def synopsis(ab_shortOnly = False):
     shortSynopsis =  '''
     NAME
 
-	    pfurl 
+	    pfurl
 
         - curl-type http communication client.
 
@@ -109,18 +109,18 @@ def synopsis(ab_shortOnly = False):
                                     "echoBack":     "Hi there!",
                                     "service":      "host"
                             }
-                    }' --quiet --jsonpprintindent 4 
+                    }' --quiet --jsonpprintindent 4
     ''' % str_defIP
 
     description =  '''
     DESCRIPTION
 
-        `pfurl` is a communications program that sends http-type curl 
-        data to a remote service. Although it is mostly used in the 
+        `pfurl` is a communications program that sends http-type curl
+        data to a remote service. Although it is mostly used in the
         "pf" family of programs and in the ChRIS suite, it can be also
         used a general-purpose curl replacement.
 
-        In addition to sending JSON-formatted strings to a service, 
+        In addition to sending JSON-formatted strings to a service,
         `pfurl` can also send files and whole directories -- the latter
         being a zip compression of a directory tree.
 
@@ -132,7 +132,7 @@ def synopsis(ab_shortOnly = False):
         [--verb <RESTVERB>]
         The REST verb to use for the remote service.
 
-        [--http <IP>:<port>]                            
+        [--http <IP>:<port>]
         The address of the remote service.
 
         [--httpProxy [<proto>://]<IP>[:<port>]]
@@ -150,12 +150,12 @@ def synopsis(ab_shortOnly = False):
         [--jsonwrapper <outerMsgJSONwrapper>]
         An optional outer wrapper for the JSON payload.
 
-        [--quiet]                                       
+        [--quiet]
         If specified, only echo the final JSON payload returned
         from remote server.
 
         [--raw]
-        If specified, do not wrap return data from remote call in a 
+        If specified, do not wrap return data from remote call in a
         JSON wrapper.
 
         [--oneShot]
@@ -166,24 +166,24 @@ def synopsis(ab_shortOnly = False):
         [--man <help>]
         Provide detailed help on various topics.
 
-        [-x|--desc]                                     
+        [-x|--desc]
         Provide an overview help page.
 
         [-y|--synopsis]
         Provide a synopsis help summary.
 
-        [--content-type <type>]                         
+        [--content-type <type>]
         Curl content-type descriptor.
-     
-        [--jsonpprintindent <indent>]                   
+
+        [--jsonpprintindent <indent>]
         If specified, print return JSON payload from remote service using
         <indent> indentation.
 
-        [--httpResponseBodyParse]                       
+        [--httpResponseBodyParse]
         If specified, interpret the return payload as encapsulated in an
         http response.
 
-        [--unverifiedCerts]                             
+        [--unverifiedCerts]
         If specified, allows transmission of https requests with self signed SSL
         certificates.
 
@@ -217,7 +217,7 @@ def synopsis(ab_shortOnly = False):
                                     "echoBack":     "Hi there!",
                                     "service":      "host"
                             }
-                    }' --quiet --jsonpprintindent 4 
+                    }' --quiet --jsonpprintindent 4
 
     and print response "prettily" using an indent of 4.
 

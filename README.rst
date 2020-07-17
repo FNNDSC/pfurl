@@ -1,5 +1,5 @@
 ##################
-pfurl - v2.2.2.2
+pfurl - v2.2.4.0
 ##################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -85,7 +85,7 @@ The easiest option however, is to just use the ``fnndsc/pfurl`` container image.
 .. code-block:: bash
 
     docker pull fnndsc/pfurl
-    
+
 and then run
 
 .. code-block:: bash
@@ -114,7 +114,7 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--verb <RESTVERB>]
         The REST verb to use for the remote service.
 
-        [--http <IP>:<port>]                            
+        [--http <IP>:<port>]
         The address of the remote service.
 
         [--httpProxy [<proto>://]<IP>[:<port>]]
@@ -129,12 +129,12 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--jsonwrapper <outerMsgJSONwrapper>]
         An optional outer wrapper for the JSON payload.
 
-        [--quiet]                                       
+        [--quiet]
         If specified, only echo the final JSON payload returned
         from remote server.
 
         [--raw]
-        If specified, do not wrap return data from remote call in a 
+        If specified, do not wrap return data from remote call in a
         JSON wrapper.
 
         [--oneShot]
@@ -145,29 +145,29 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--man <help>]
         Provide detailed help on various topics.
 
-        [-x|--desc]                                     
+        [-x|--desc]
         Provide an overview help page.
 
         [-y|--synopsis]
         Provide a synopsis help summary.
 
-        [--content-type <type>]                         
+        [--content-type <type>]
         Curl content-type descriptor.
-     
-        [--jsonpprintindent <indent>]                   
+
+        [--jsonpprintindent <indent>]
         If specified, print return JSON payload from remote service using
         <indent> indentation.
 
-        [--httpResponseBodyParse]                       
+        [--httpResponseBodyParse]
         If specified, interpret the return payload as encapsulated in an
         http response.
 
-        [--unverifiedCerts]                             
+        [--unverifiedCerts]
         If specified, allows transmission of https requests with self signed SSL
         certificates.
 
         [--authToken <token>]
-        A token to transmit with an http request. Note, you if you set an 
+        A token to transmit with an http request. Note, you if you set an
         --authToken, then you should NOT also set an --auth.
 
         [--auth <user>:<passwd>]
@@ -202,7 +202,7 @@ Say 'hello' to a ``pfcon`` service listening on the localhost at port 5005:
                                     "askAbout":     "sysinfo",
                                     "echoBack":     "Hi there!"
                             }
-                    }' --quiet --jsonpprintindent 4 
+                    }' --quiet --jsonpprintindent 4
 
 and print response "prettily" using an indent of 4.
 

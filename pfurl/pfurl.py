@@ -1171,8 +1171,9 @@ class Pfurl():
                 # Here we append a trailing '/' to the dirname so that the zip
                 # operation zips the contents and not the parent dir. Note though
                 # that we should only append the '/' if it is not already present!
-                if str_localPath[-1] != '/':
-                    str_dirSuffix   = '/'
+                while str_localPath[-1] == '/':
+                    str_localPath = str_localPath[0:-1]
+                str_dirSuffix   = '/'
             else:
                 self.dp.qprint("target is a file", level = 1, comms ='status')
 

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 
 '''
-        __            _ 
+        __            _
        / _|          | |
  _ __ | |_ _   _ _ __| |
 | '_ \|  _| | | | '__| |
 | |_) | | | |_| | |  | |
 | .__/|_|  \__,_|_|  |_|
-| |                     
-|_|                     
+| |
+|_|
 
                             Process-File-over-URL
 
-    'pfurl' sends REST conforming commands and data to remote services, 
-    similar in some ways to the well-known CLI tool, 'curl' or the Python 
+    'pfurl' sends REST conforming commands and data to remote services,
+    similar in some ways to the well-known CLI tool, 'curl' or the Python
     tool, 'httpie'.
-    
-    'pfurl' not only sends curl type payloads, but can also zip/unzip 
+
+    'pfurl' not only sends curl type payloads, but can also zip/unzip
     entire directories of files for transmission and reception.
-    
+
     'pfurl' is designed to be part of the ChRIS framework but can also be
     used in similar use cases to 'curl' or 'httpie'.
 
@@ -149,9 +149,9 @@ class Pfurl():
             if key == 'authToken':                  self.str_authToken              = val
             if key == 'httpProxy':                  self.str_httpProxy              = val
 
-        self.dp                         = pfmisc.debug(    
+        self.dp                         = pfmisc.debug(
                                             verbosity   = self.verbosity,
-                                            within      = self.__name__ 
+                                            within      = self.__name__
                                             )
 
         if self.b_quiet: self.dp.verbosity = -10
@@ -186,7 +186,7 @@ class Pfurl():
             if self.str_port:
                 str_colon_port = ':' + self.str_port
 
-            self.dp.qprint("Will transmit to\t\t%s://%s%s" % 
+            self.dp.qprint("Will transmit to\t\t%s://%s%s" %
                 (self.str_protocol, self.str_ip, str_colon_port), level = 1)
 
     def storage_resolveBasedOnKey(self, *args, **kwargs):
@@ -214,7 +214,7 @@ class Pfurl():
             if k == 'key':  str_key = v
         d_msg['meta']['key']    = str_key
 
-        # 
+        #
         d_ret = self.pullPath_core(d_msg = d_msg)
 
         return {
@@ -360,8 +360,8 @@ class Pfurl():
                 must be made to `pman` to start a one-shot listener
                 on a given port. This port then accepts the file transfer
                 from the 'pushPath' method.
-                
-                The "meta" dictionary consists of several nested 
+
+                The "meta" dictionary consists of several nested
                 dictionaries. In particular, the "remote/path"
                 field can be used to suggest a location on the remote
                 filesystem to save the transmitted data. Successful
@@ -371,7 +371,7 @@ class Pfurl():
 
                 """ + Colors.YELLOW + """EXAMPLE:
                 """ + Colors.LIGHT_GREEN + """
-                
+
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
@@ -398,7 +398,7 @@ class Pfurl():
                 """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR  + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
-                
+
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pushPath",
                         "meta":
@@ -463,7 +463,7 @@ class Pfurl():
 
                 """ + Colors.YELLOW + """EXAMPLE -- using zip:
                 """ + Colors.LIGHT_GREEN + """
-                
+
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
@@ -490,7 +490,7 @@ class Pfurl():
                 """ % (self.str_ip, self.str_port) + Colors.NO_COLOUR + """
                 """ + Colors.YELLOW + """ALTERNATE -- using copy/symlink:
                 """ + Colors.LIGHT_GREEN + """
-                
+
                 pfurl --verb POST --http %s:%s/api/v1/cmd/ --msg \\
                     '{  "action": "pullPath",
                         "meta":
@@ -535,15 +535,15 @@ class Pfurl():
 
         if len(d_msg):
             str_query           = '?%s' % urllib.parse.urlencode(d_msg)
-        
+
         self.curl_init(verbose  = verbose)
-        self.curl_URL_resolveAndSet(d_msg, str_ip, str_port, str_query)        
+        self.curl_URL_resolveAndSet(d_msg, str_ip, str_port, str_query)
         self.curl_unverifiedCerts_checkAndSet()
 
         d_ret               = self.curl_doCall()
-        self.dp.qprint('Incoming transmission received, length = %s' % 
+        self.dp.qprint('Incoming transmission received, length = %s' %
                         "{:,}".format(sys.getsizeof(d_ret)),
-                        level = 1, 
+                        level = 1,
                         comms = 'rx')
         return d_ret
 
@@ -561,12 +561,12 @@ class Pfurl():
         str_response = self.pull_core(msg = d_msg)
 
         self.dp.qprint(
-            "Received "                         + 
-            Colors.YELLOW                       + 
+            "Received "                         +
+            Colors.YELLOW                       +
             "{:,}".format(len(str_response))    +
-            Colors.PURPLE                       + 
+            Colors.PURPLE                       +
             " bytes...",
-            level = 1, 
+            level = 1,
             comms = 'status'
         )
 
@@ -607,7 +607,7 @@ class Pfurl():
 
             /tmp/unpack-<uuid.uuid4()>
 
-        and then the file contents are moved to the actual destination 
+        and then the file contents are moved to the actual destination
         directory. In shell, this would be:
 
             mkdir /tmp/unpack-<uuid.uuid4()>
@@ -625,7 +625,7 @@ class Pfurl():
             d_local             = d_meta['local']
         if 'to' in d_meta:
             d_local             = d_meta['to']
-            
+
         str_localPath           = d_local['path']
         # d_remote                = d_meta['remote']
         d_transport             = d_meta['transport']
@@ -674,7 +674,7 @@ class Pfurl():
         self.dp.qprint("Writing byte stream to %s..." % str_localFile,
                     level = 1, comms ='status')
         with open(str_localFile, 'wb') as fh:
-            try:    
+            try:
                 fh.write(str_response)
                 fh.close()
                 b_status                = True
@@ -705,7 +705,7 @@ class Pfurl():
             d_ret['status']                             = d_fio['status']
             d_ret['msg']                                = d_fio['msg']
             if d_meta['transport']['compress']['cleanup']:
-                # NB: This zip file is actually in the unpack dir!        
+                # NB: This zip file is actually in the unpack dir!
                 self.dp.qprint('Removing zip file %s' % str_localFile)
                 os.remove(str_localFile)
 
@@ -713,7 +713,7 @@ class Pfurl():
         # Handle case when a single file has been sent w/o zipping -- currently NON FUNCTIONAL!
         # if not d_compress['archive'] == 'zip':
         #     # str_remotePath, str_remoteFile  = os.path.split(d_remote['path'])
-        #     self.dp.qprint('Moving single file %s to %s...' % (str_localFile, 
+        #     self.dp.qprint('Moving single file %s to %s...' % (str_localFile,
         #                                                     os.path.join(str_unpackDir, str_remoteFile)))
         #     shutil.move(str_localFile, os.path.join(str_unpackDir, str_remoteFile))
         #     d_ret['localOp']['move']    = {
@@ -733,7 +733,7 @@ class Pfurl():
                 d_ret['status']                     = d_ret['localOp']['move']['status']
                 d_ret['msg']                        = d_ret['localOp']['move']['msg']
             except:
-                self.dp.qprint('An error occured in moving. Target might already exist.', 
+                self.dp.qprint('An error occured in moving. Target might already exist.',
                                 level = 1, comms ='error')
                 d_ret['localOp']['move']['status']  = False
                 d_ret['localOp']['move']['msg']     = 'Multiple file move unsuccessful. Target exists!'
@@ -742,7 +742,7 @@ class Pfurl():
                 break
 
         # Clean up
-        if d_meta['transport']['compress']['cleanup']:        
+        if d_meta['transport']['compress']['cleanup']:
             self.dp.qprint('Removing unpack dir %s' % str_unpackDir)
             shutil.rmtree(str_unpackDir)
 
@@ -812,8 +812,8 @@ class Pfurl():
 
         if 'pull' in d_msg['action'] or b_pull:
             # If we are "pulling" data to local, then we assume the local
-            # directory does not exist. If it does, and if 'createDir' is 'true', 
-            # we remove the localPath and re-create it, thus assuring it will 
+            # directory does not exist. If it does, and if 'createDir' is 'true',
+            # we remove the localPath and re-create it, thus assuring it will
             # only contain the info pulled from the remote source.
             # If 'writeInExisting' is 'true', then execution continues, but
             # may fail if the pulled target exists in the localPath.
@@ -836,7 +836,7 @@ class Pfurl():
             else:
                 str_msg = 'local path already exists!'
                 if 'writeInExisting' in d_local.keys():
-                    if not d_local['writeInExisting']: 
+                    if not d_local['writeInExisting']:
                         if b_isDir: b_exists = False
                 else:
                     if b_isDir: b_exists = False
@@ -856,34 +856,34 @@ class Pfurl():
 
     def curl_URL_resolveAndSet(self, d_msg, str_ip, str_port, str_query = ''):
         """
-        Resolve the remote URL with optional port spec and set the 
+        Resolve the remote URL with optional port spec and set the
         corresponding curl option.
         """
         str_colon_port = ''
         if str_port:
             str_colon_port = ':' + str_port
-        
+
         str_URLfull = "%s://%s%s%s%s" % \
-                    (   
-                        self.str_protocol, 
-                        str_ip, 
-                        str_colon_port, 
+                    (
+                        self.str_protocol,
+                        str_ip,
+                        str_colon_port,
                         self.str_URL,
                         str_query
                     )
         self.dp.qprint(
-            str_URLfull     + 
-            '\n '           + 
+            str_URLfull     +
+            '\n '           +
             json.dumps(d_msg, indent = 4),
             comms   = 'tx')
 
         self.c.setopt(pycurl.URL, str_URLfull)
-        return str_URLfull                    
+        return str_URLfull
 
     def curl_init(self, **kwargs):
         """
-        Initialize the curl object and perform some 
-        optional header initializations as well as 
+        Initialize the curl object and perform some
+        optional header initializations as well as
         some ON/OFF settings.
         """
         verbose     = 0
@@ -892,13 +892,13 @@ class Pfurl():
         self.c.setopt(pycurl.WRITEFUNCTION,   self.buffer.write)
         self.c.setopt(pycurl.FOLLOWLOCATION,  1)
         if len(self.str_authToken):
-            self.dp.qprint("Using token-based authorization <%s>" % 
+            self.dp.qprint("Using token-based authorization <%s>" %
                             self.str_authToken)
             self.HTTPheaders.append('Authorization: bearer %s' % self.str_authToken)
-        if len(self.str_contentType):   
+        if len(self.str_contentType):
             self.HTTPheaders.append('Content-type: %s' % self.str_contentType)
         if len(self.str_auth):
-            self.dp.qprint("Using user:password authentication <%s>" % 
+            self.dp.qprint("Using user:password authentication <%s>" %
                             self.str_auth)
             self.c.setopt(pycurl.USERPWD, self.str_auth)
         if len(self.str_httpProxy):
@@ -918,14 +918,14 @@ class Pfurl():
         Configure curl for file tranmission via a FORM
         """
         self.HTTPheaders.append('Mode: file')
-        self.dp.qprint("Building form-based multi-part message...", 
-                        level = 1, 
+        self.dp.qprint("Building form-based multi-part message...",
+                        level = 1,
                         comms ='status')
         fread               = open(str_fileToProcess, "rb")
         filesize            = os.path.getsize(str_fileToProcess)
         self.c.setopt(
-                        pycurl.HTTPPOST, 
-                        [  
+                        pycurl.HTTPPOST,
+                        [
                             ("d_msg",       str_msg),
                             ("filename",    str_fileToProcess),
                             ("local",       (pycurl.FORM_FILE, str_fileToProcess))
@@ -933,17 +933,17 @@ class Pfurl():
                     )
         self.c.setopt(pycurl.READFUNCTION,    fread.read)
         self.c.setopt(pycurl.POSTFIELDSIZE,   filesize)
-        self.dp.qprint("Transmitting "                                      +  
-                        Colors.YELLOW                                       +  
-                        "{:,}".format(os.stat(str_fileToProcess).st_size)   + 
+        self.dp.qprint("Transmitting "                                      +
+                        Colors.YELLOW                                       +
+                        "{:,}".format(os.stat(str_fileToProcess).st_size)   +
                         Colors.PURPLE + " bytes...",
-                        level = 1, 
+                        level = 1,
                         comms = 'status')
 
     def curl_controlMode_set(self, str_msg):
         self.HTTPheaders.append('Mode: control')
-        self.dp.qprint("Sending control message...", 
-                        level = 1, 
+        self.dp.qprint("Sending control message...",
+                        level = 1,
                         comms = 'status')
         self.c.setopt(pycurl.POSTFIELDS, str_msg)
 
@@ -964,7 +964,7 @@ class Pfurl():
 
         for off in l_optOFF:
             self.c.setopt(off, 0)
-        
+
         if d_opt:
             for k,v in d_opt.items():
                 self.c.setopt(k, v)
@@ -991,8 +991,8 @@ class Pfurl():
             self.c.perform()
         except Exception as e:
             str_exception       = str(e)
-            self.dp.qprint('Curl perform failure error trapped: %s' % 
-                            str_exception, 
+            self.dp.qprint('Curl perform failure error trapped: %s' %
+                            str_exception,
                             comms = 'error')
             d_ret['status']     = False
             d_ret['data']       = self.buffer.getvalue()
@@ -1012,7 +1012,7 @@ class Pfurl():
                 str_exception       = str(e)
                 d_ret['status']     = False
                 d_ret['exception']  = str_exception
-        
+
         self.c.close()
         return d_ret
 
@@ -1026,20 +1026,20 @@ class Pfurl():
             response    = d_curlResponse['data']
             if isinstance(response, dict):
                 self.dp.qprint(
-                        "Response from curl:\n%s" % json.dumps(response, indent = 4), 
-                        level   = 1, 
+                        "Response from curl:\n%s" % json.dumps(response, indent = 4),
+                        level   = 1,
                         comms   ='status')
             else:
                 self.dp.qprint(
-                        "Response from curl: %s" % response, 
-                        level   = 1, 
+                        "Response from curl: %s" % response,
+                        level   = 1,
                         comms   = 'status')
             if self.b_raw:
                 try:
                     if self.b_httpResponseBodyParse:
                         d_ret   = json.loads(
                                 self.httpResponse_bodyParse(response = response)
-                        )   
+                        )
                     else:
                         d_ret   = json.loads(response)
                 except:
@@ -1054,12 +1054,12 @@ class Pfurl():
                 d_ret['msg']            = 'push OK.'
 
             if isinstance(d_ret, object):
-                self.dp.qprint(json.dumps(d_ret, sort_keys=True, indent=4), 
-                                level   = 1, 
+                self.dp.qprint(json.dumps(d_ret, sort_keys=True, indent=4),
+                                level   = 1,
                                 comms   = 'rx')
             if isinstance(d_ret, str):
-                self.dp.qprint(d_ret, 
-                                level   = 1, 
+                self.dp.qprint(d_ret,
+                                level   = 1,
                                 comms   = 'rx')
         return d_ret
 
@@ -1081,7 +1081,7 @@ class Pfurl():
         File contents are transmitted in a FORM, while meta-control type
         directives are posted in the message body directly.
 
-        Note that most of the configuration of the curl object is handled 
+        Note that most of the configuration of the curl object is handled
         by other methods (see the curl_* above).
         """
 
@@ -1143,103 +1143,154 @@ class Pfurl():
 
     def pushPath_compress(self, d_msg, **kwargs):
         """
+        Main entry point for compressing a path (file or directory argument).
+
+        This method contains several nested functions to improve general
+        readability and maintainability.
         """
 
-        d_meta              = d_msg['meta']
-        str_meta            = json.dumps(d_meta)
-        d_local             = d_meta['local']
-        str_localPath       = d_local['path']
+        def zip_perform():
+            """
+            Nested function that calls the zip_process() method to
+            perform the actual zip. The return from this call is packed
+            into the method 'd_ret' structure.
 
-        d_remote            = d_meta['remote']
-        str_ip              = self.str_ip
-        str_port            = self.str_port
-        if 'ip' in d_remote:
-            str_ip          = d_remote['ip']
-        if 'port' in d_remote:
-            str_port        = d_remote['port']
+            Logic here handles file/dir issues, and dir naming issues (such
+            as sanity checking trailing '/' chars).
+            """
+            nonlocal str_fileToProcess, str_zipFile, d_ret
 
-        str_mechanism       = ""
-        str_archive         = ""
-        d_transport         = d_meta['transport']
-        if 'compress' in d_transport:
-            d_compress      = d_transport['compress']
-            str_archive     = d_compress['archive']
-
-        # 
-        str_remotePath      = self.remoteLocation_resolveSimple(d_remote)['path']
-
-        if 'cleanup' in d_compress:
-            b_cleanZip      = d_compress['cleanup']
-
-        str_fileToProcess   = str_localPath
-        str_zipFile         = ""
-        str_base64File      = ""
-
-        b_zip               = True
-
-        if str_archive      == 'zip':   b_zip   = True
-        else:                           b_zip   = False
-
-        if os.path.isdir(str_localPath):
-            b_zip           = True
-            str_archive     = 'zip'
-
-        d_ret               = {'local': {}}
-        # If specified (or if the target is a directory), create zip archive
-        # of the local path's contents (or the target if a file)
-        if b_zip:
-            self.dp.qprint("Zipping target '%s'..." % str_localPath, level = 1, comms ='status')
+            self.dp.qprint(
+                            "Zipping target '%s'..." % str_localPath,
+                            level = 1,
+                            comms ='status'
+            )
             str_dirSuffix   = ""
             if os.path.isdir(str_localPath):
                 self.dp.qprint("target is a directory", level = 1, comms ='status')
-                str_dirSuffix   = '/'
+                # Here we append a trailing '/' to the dirname so that the zip
+                # operation zips the contents and not the parent dir. Note though
+                # that we should only append the '/' if it is not already present!
+                if str_localPath[-1] != '/':
+                    str_dirSuffix   = '/'
             else:
                 self.dp.qprint("target is a file", level = 1, comms ='status')
+
+            # NB NB NB! Zip functionality called here!
             d_fio   = zip_process(
                 action  = 'zip',
                 path    = str_localPath,
                 arcroot = str_localPath + str_dirSuffix
             )
+
             if not d_fio['status']: return {'stdout': json.dumps(d_fio)}
             str_fileToProcess   = d_fio['fileProcessed']
             str_zipFile         = str_fileToProcess
             self.dp.qprint("Zipped to %s..." % str_fileToProcess, level = 1, comms ='status')
             d_ret['local']['zip']               = d_fio
 
-        # Push the actual file -- note the d_ret!
-        d_ret['remoteServer']  = self.push_core(    d_msg,
-                                                    fileToPush  = str_fileToProcess)
-                                                    # d_ret       = d_ret)
-
-        if b_cleanZip:
+        def zip_cleanLeftOverFiles():
+            """
+            Clean up leftover zip files. Files to remove are "named"
+            by the zip_perform() nested function.
+            """
             self.dp.qprint("Removing temp files...", level = 1, comms ='status')
             self.dp.qprint("zipFile    = %s" % str_zipFile)
             self.dp.qprint("base64File = %s" % str_base64File)
             if os.path.isfile(str_zipFile):     os.remove(str_zipFile)
             if os.path.isfile(str_base64File):  os.remove(str_base64File)
 
-        self.dp.qprint("Returning: %s" % json.dumps(d_ret, indent = 4), 
-                        level = 1, 
-                        comms = 'status')
-        if 'status' in d_ret['remoteServer']:
-            try:
-                d_ret['status'] = d_ret['remoteServer']['status']
-                d_ret['msg']    = d_ret['remoteServer']['msg']
-            except:
-                self.dp.qprint("Error from server: \n%s" % d_ret, 
-                                comms = 'error')
-        else:
-            if type(d_ret['remoteServer']) is dict:
-                d_ret['status'] = d_ret['remoteServer']['decode']['status']
-                d_ret['msg'] = d_ret['remoteServer']['decode']['msg']
-            else:
-                d_ret['msg'] = "Invalid response from remote server"
-                d_ret['status'] = False
-                response  = d_ret['remoteServer']
-                d_ret['remoteServer']   = {}
-                d_ret['remoteServer']['status']     = False
-                d_ret['remoteServer']['response']   = response
+        def vars_init():
+            """
+            Initialize values for various method variables.
 
+            Set values directly by binding to nonlocal variables in the
+            caller scope.
+            """
+            nonlocal d_meta,    d_local,        d_remote,       d_transport
+            nonlocal str_meta,  str_localPath,  str_archive,    str_fileToProcess
+            nonlocal str_ip,    str_port
+            nonlocal b_cleanZip,b_zip
+
+            d_meta              = d_msg['meta']
+            d_local             = d_meta['local']
+            d_remote            = d_meta['remote']
+            d_transport         = d_meta['transport']
+            str_meta            = json.dumps(d_meta)
+            str_localPath       = d_local['path']
+            str_ip              = self.str_ip
+            str_port            = self.str_port
+            if 'ip' in d_remote:
+                str_ip          = d_remote['ip']
+            if 'port' in d_remote:
+                str_port        = d_remote['port']
+            if 'compress' in d_transport:
+                d_compress      = d_transport['compress']
+                str_archive     = d_compress['archive']
+            if 'cleanup' in d_compress:
+                b_cleanZip      = d_compress['cleanup']
+            if str_archive      == 'zip':   b_zip   = True
+            else:                           b_zip   = False
+            str_fileToProcess   = str_localPath
+            if os.path.isdir(str_localPath):
+                b_zip           = True
+                str_archive     = 'zip'
+
+        def ret_cleanup():
+            """
+            Cleanup / handle the d_ret return structure.
+            """
+            nonlocal d_ret
+            if 'status' in d_ret['remoteServer']:
+                try:
+                    d_ret['status'] = d_ret['remoteServer']['status']
+                    d_ret['msg']    = d_ret['remoteServer']['msg']
+                except:
+                    self.dp.qprint("Error from server: \n%s" % d_ret,
+                                    comms = 'error')
+            else:
+                if type(d_ret['remoteServer']) is dict:
+                    d_ret['status'] = d_ret['remoteServer']['decode']['status']
+                    d_ret['msg']    = d_ret['remoteServer']['decode']['msg']
+                else:
+                    d_ret['msg']    = "Invalid response from remote server"
+                    d_ret['status'] = False
+                    response  = d_ret['remoteServer']
+                    d_ret['remoteServer']               = {}
+                    d_ret['remoteServer']['status']     = False
+                    d_ret['remoteServer']['response']   = response
+
+
+        # Method code starts here
+
+        # "Declare" variables
+        d_meta          = d_transport       = {}
+        d_local         = d_remote          = {}
+        str_meta        = str_archive       = ""
+        str_ip          = str_port          = ""
+        str_localPath   = str_fileToProcess = ""
+        str_zipFile     = str_base64File    = ""
+        b_cleanZip      = b_zip             = False
+        d_ret           = {'local': {}}
+
+        vars_init()
+
+        # If specified (or if the target is a directory), create zip archive
+        # of the local path's contents (or the target if a file)
+        if b_zip: zip_perform()
+
+        # Push the actual file -- note the d_ret!
+        d_ret['remoteServer']  = self.push_core(    d_msg,
+                                                    fileToPush  = str_fileToProcess)
+                                                    # d_ret       = d_ret)
+
+        if b_cleanZip:  zip_cleanLeftOverFiles()
+
+        self.dp.qprint("Returning: %s" % json.dumps(d_ret, indent = 4),
+                        level = 1,
+                        comms = 'status')
+
+        ret_cleanup()
         return d_ret
 
     def pushPath_copy(self, d_msg, **kwargs):
@@ -1294,11 +1345,11 @@ class Pfurl():
                         "cleanup":  True
                     }
                 }
-            d_meta['transport'] = d_transport                
+            d_meta['transport'] = d_transport
         else:
             d_transport = d_meta['transport']
 
-        # 
+        #
         # First check on the paths, both local and remote
         self.dp.qprint('Checking local path status...', level = 1, comms ='status')
         d_ret['localCheck'] = self.path_localLocationCheck(d_msg)
@@ -1404,7 +1455,7 @@ class Pfurl():
         return self.pathOp_do(d_msg, action = 'pull')
 
     def httpStr_parse(self, http):
-        
+
         if 'http://' in http or 'https://' in http:
             protocol, address = http.split("://")
             self.str_protocol = protocol

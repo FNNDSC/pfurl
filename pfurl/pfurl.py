@@ -1158,7 +1158,7 @@ class Pfurl():
             Logic here handles file/dir issues, and dir naming issues (such
             as sanity checking trailing '/' chars).
             """
-            nonlocal str_fileToProcess, str_zipFile, d_ret
+            nonlocal str_fileToProcess, str_zipFile, str_localPath, d_ret 
 
             self.dp.qprint(
                             "Zipping target '%s'..." % str_localPath,

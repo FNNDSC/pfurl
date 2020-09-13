@@ -19,9 +19,8 @@ setup(
       author_email     =   'rudolph.pienaar@gmail.com',
       url              =   'https://github.com/FNNDSC/pfurl',
       packages         =   ['pfurl'],
-      install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pyyaml', 'colorama'],
-      test_suite       =   'nose.collector',
-      tests_require    =   ['nose'],
+      install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'colorama'],
+      test_suite       =   'tests',
       scripts          =   ['bin/pfurl'],
       license          =   'MIT',
       zip_safe         =   False

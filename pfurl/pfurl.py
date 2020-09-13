@@ -38,7 +38,6 @@ import datetime
 import zipfile
 import uuid
 import base64
-import yaml
 import shutil
 import glob
 
@@ -1008,9 +1007,7 @@ class Pfurl():
             if self.b_raw:
                 try:
                     if self.b_httpResponseBodyParse:
-                        d_ret = json.loads(
-                            self.httpResponse_bodyParse(response = response)
-                        )
+                        d_ret = json.loads(self._remove_misplaced_http_headers(response))
                     else:
                         d_ret = json.loads(response)
                 except:
@@ -1435,23 +1432,52 @@ class Pfurl():
         if len(host_port_pair) > 1:
             self.str_port = host_port_pair[1]
 
-    def httpResponse_bodyParse(self, **kwargs):
+    def _remove_misplaced_http_headers(self, response: str) -> str:
         """
-        Returns the *body* from a http response.
-        :param kwargs: response = <string>
-        :return: the <body> from the http <string>
-        """
+        Remove HTTP headers from a block of text, returning only the JSON payload.
+        Some responses (like from pfioh) might weirdly put HTTP headers in the body.
 
-        str_response    = ''
-        for k,v in kwargs.items():
-            if k == 'response': str_response    = v
-        try:
-            str_body        = str_response.split('\r\n\r\n')[1]
-            d_body          = yaml.load(str_body, Loader=yaml.FullLoader)
-            str_body        = json.dumps(d_body)
-        except:
-            str_body        = str_response
-        return str_body
+            curl -i http://pfioh:5055/whatever/dne --data \
+            '{  "action": "hello", "meta": { "askAbout": "sysinfo", "echoBack": "Hi there!"}}'
+            HTTP/1.0 200 OK
+            Server: BaseHTTP/0.6 Python/3.6.5
+            Date: Sat, 11 Jul 2020 09:36:23 GMT
+
+            200 OK
+            Content-Type: text/html; charset=UTF-8
+            Content-Length: 52
+
+            {"stdout": "the json stuff that you actually want"}
+
+        Given the HTTP response body text above, this helper function produces
+
+            {"stdout": "the json stuff that you actually want"}
+
+        :param response: given response body text, may include HTTP headers
+        :return: wanted response body without misplaced HTTP headers
+        """
+        if '\n' not in response:
+            self.logger.warning('no body found')
+            return ''
+
+        # search for the next line after the first where
+        # the first non-whitespace character might be JSON data
+        lines = response.split('\n')
+
+        for i in range(1, len(lines)):  # skip the first line
+            line = lines[i].lstrip()
+            if not line:
+                self.logger.debug('skipping misplaced http header line: "%s"', line)
+                continue  # skip empty lines
+            first = line[0]
+            if first in ['{', '[', '"', '-', '.'] or first.isdigit():
+                s_ret = '\n'.join(lines[i:])
+                self.logger.info('found JSON-like data in body\n%s', s_ret)
+                return s_ret
+
+        # could not find body
+        self.logger.warning('skipped everything, no body found')
+        return ''
 
     def __call__(self, *args, **kwargs):
         """

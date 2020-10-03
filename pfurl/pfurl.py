@@ -43,6 +43,8 @@ import  inspect
 import  glob
 
 from    urllib.parse        import urlparse
+from    contextlib          import closing
+from    pathlib             import Path
 
 # import  codecs
 
@@ -1158,7 +1160,7 @@ class Pfurl():
             Logic here handles file/dir issues, and dir naming issues (such
             as sanity checking trailing '/' chars).
             """
-            nonlocal str_fileToProcess, str_zipFile, str_localPath, d_ret 
+            nonlocal str_fileToProcess, str_zipFile, str_localPath, d_ret
 
             self.dp.qprint(
                             "Zipping target '%s'..." % str_localPath,
@@ -1275,6 +1277,7 @@ class Pfurl():
         d_ret           = {'local': {}}
 
         vars_init()
+        # pudb.set_trace()
 
         # If specified (or if the target is a directory), create zip archive
         # of the local path's contents (or the target if a file)
@@ -1566,6 +1569,8 @@ def zip_process(**kwargs):
     str_zipFileName = ""
     str_action      = "zip"
     str_arcroot     = ""
+    filesInZip      = 0
+    localFSsize     = 0
     for k,v in kwargs.items():
         if k == 'path':             str_localPath   = v
         if k == 'action':           str_action      = v
@@ -1599,7 +1604,21 @@ def zip_process(**kwargs):
                     }
         if str_mode     == 'r':
             ziphandler.extractall(str_localPath)
+
         ziphandler.close()
+
+        # Count the number of archive members
+        # See https://stackoverflow.com/questions/31124670/how-to-programmatically-count-the-number-of-files-in-an-archive-using-python
+        try:
+            with closing(zipfile.ZipFile(str_zipFileName)) as archive:
+                filesInZip = len(archive.infolist())
+        except:
+            filesInZip      = -1
+
+        # Deterime the size of the file system elements
+        root_directory      = Path(str_localPath)
+        localFSsize         = sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
+
         str_msg             = '%s operation successful' % str_action
         b_status            = True
     except:
@@ -1608,6 +1627,8 @@ def zip_process(**kwargs):
     return {
         'msg':              str_msg,
         'fileProcessed':    str_zipFileName,
+        'filesInZip':       filesInZip,
+        'localFSsize':      localFSsize,
         'status':           b_status,
         'path':             str_localPath,
         'zipmode':          str_mode,

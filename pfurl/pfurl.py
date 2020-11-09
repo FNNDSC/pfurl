@@ -37,7 +37,6 @@ import  datetime
 import  zipfile
 import  uuid
 import  base64
-import  yaml
 import  shutil
 import  inspect
 import  glob
@@ -100,7 +99,6 @@ class Pfurl():
         self.b_quiet                    = False
         self.b_raw                      = False
         self.b_oneShot                  = False
-        self.b_httpResponseBodyParse    = False
         self.auth                       = ''
         self.str_jsonwrapper            = ''
         self.str_contentType            = ''
@@ -137,7 +135,6 @@ class Pfurl():
             if key == 'b_quiet':                    self.b_quiet                    = val
             if key == 'b_raw':                      self.b_raw                      = val
             if key == 'b_oneShot':                  self.b_oneShot                  = val
-            if key == 'b_httpResponseBodyParse':    self.b_httpResponseBodyParse    = val
             if key == 'man':                        self.str_man                    = val
             if key == 'jsonwrapper':                self.str_jsonwrapper            = val
             if key == 'useDebug':                   self.b_useDebug                 = val
@@ -1038,12 +1035,7 @@ class Pfurl():
                         comms   = 'status')
             if self.b_raw:
                 try:
-                    if self.b_httpResponseBodyParse:
-                        d_ret   = json.loads(
-                                self.httpResponse_bodyParse(response = response)
-                        )
-                    else:
-                        d_ret   = json.loads(response)
+                    d_ret   = json.loads(response)
                 except:
                     d_ret           = response
             else:
@@ -1376,7 +1368,7 @@ class Pfurl():
             d_ret['remoteCheck']    = remoteCheck
             self.dp.qprint("d_ret:\n%s" % self.pp.pformat(d_ret).strip(), level = 1, comms ='rx')
             if not d_ret['remoteCheck']['status']:
-                self.dp.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
+                self.dp.qprint('An error occurred while checking the remote server.',
                             level = 1, comms ='error')
                 d_ret['remoteCheck']['msg']     = "The remote path spec is invalid!"
                 b_OK                            = False
@@ -1475,25 +1467,6 @@ class Pfurl():
         self.str_ip = host_port_pair[0]
         if len(host_port_pair) > 1:
             self.str_port = host_port_pair[1]
-
-    def httpResponse_bodyParse(self, **kwargs):
-        """
-        Returns the *body* from a http response.
-
-        :param kwargs: response = <string>
-        :return: the <body> from the http <string>
-        """
-
-        str_response    = ''
-        for k,v in kwargs.items():
-            if k == 'response': str_response    = v
-        try:
-            str_body        = str_response.split('\r\n\r\n')[1]
-            d_body          = yaml.load(str_body, Loader=yaml.FullLoader)
-            str_body        = json.dumps(d_body)
-        except:
-            str_body        = str_response
-        return str_body
 
     def __call__(self, *args, **kwargs):
         """

@@ -1043,7 +1043,7 @@ class Pfurl():
                     d_ret['stdout']     = json.loads(response)
                 except:
                     d_ret['stdout']     = response
-                if 'status' in d_ret['stdout']:
+                if isinstance(d_ret['stdout'], dict) and 'status' in d_ret['stdout']:
                     d_ret['status']     = d_ret['stdout']['status']
                 d_ret['msg']            = 'push OK.'
 

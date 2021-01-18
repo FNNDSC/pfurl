@@ -37,12 +37,13 @@ import  datetime
 import  zipfile
 import  uuid
 import  base64
-import  yaml
 import  shutil
 import  inspect
 import  glob
 
 from    urllib.parse        import urlparse
+from    contextlib          import closing
+from    pathlib             import Path
 
 # import  codecs
 
@@ -98,7 +99,6 @@ class Pfurl():
         self.b_quiet                    = False
         self.b_raw                      = False
         self.b_oneShot                  = False
-        self.b_httpResponseBodyParse    = False
         self.auth                       = ''
         self.str_jsonwrapper            = ''
         self.str_contentType            = ''
@@ -135,7 +135,6 @@ class Pfurl():
             if key == 'b_quiet':                    self.b_quiet                    = val
             if key == 'b_raw':                      self.b_raw                      = val
             if key == 'b_oneShot':                  self.b_oneShot                  = val
-            if key == 'b_httpResponseBodyParse':    self.b_httpResponseBodyParse    = val
             if key == 'man':                        self.str_man                    = val
             if key == 'jsonwrapper':                self.str_jsonwrapper            = val
             if key == 'useDebug':                   self.b_useDebug                 = val
@@ -1036,12 +1035,7 @@ class Pfurl():
                         comms   = 'status')
             if self.b_raw:
                 try:
-                    if self.b_httpResponseBodyParse:
-                        d_ret   = json.loads(
-                                self.httpResponse_bodyParse(response = response)
-                        )
-                    else:
-                        d_ret   = json.loads(response)
+                    d_ret   = json.loads(response)
                 except:
                     d_ret           = response
             else:
@@ -1049,7 +1043,7 @@ class Pfurl():
                     d_ret['stdout']     = json.loads(response)
                 except:
                     d_ret['stdout']     = response
-                if 'status' in d_ret['stdout']:
+                if isinstance(d_ret['stdout'], dict) and 'status' in d_ret['stdout']:
                     d_ret['status']     = d_ret['stdout']['status']
                 d_ret['msg']            = 'push OK.'
 
@@ -1158,7 +1152,7 @@ class Pfurl():
             Logic here handles file/dir issues, and dir naming issues (such
             as sanity checking trailing '/' chars).
             """
-            nonlocal str_fileToProcess, str_zipFile, str_localPath, d_ret 
+            nonlocal str_fileToProcess, str_zipFile, str_localPath, d_ret
 
             self.dp.qprint(
                             "Zipping target '%s'..." % str_localPath,
@@ -1275,6 +1269,7 @@ class Pfurl():
         d_ret           = {'local': {}}
 
         vars_init()
+        # pudb.set_trace()
 
         # If specified (or if the target is a directory), create zip archive
         # of the local path's contents (or the target if a file)
@@ -1373,7 +1368,7 @@ class Pfurl():
             d_ret['remoteCheck']    = remoteCheck
             self.dp.qprint("d_ret:\n%s" % self.pp.pformat(d_ret).strip(), level = 1, comms ='rx')
             if not d_ret['remoteCheck']['status']:
-                self.dp.qprint('An error occurred while checking the remote server. Sometimes using --httpResponseBodyParse will address this problem.',
+                self.dp.qprint('An error occurred while checking the remote server.',
                             level = 1, comms ='error')
                 d_ret['remoteCheck']['msg']     = "The remote path spec is invalid!"
                 b_OK                            = False
@@ -1473,25 +1468,6 @@ class Pfurl():
         if len(host_port_pair) > 1:
             self.str_port = host_port_pair[1]
 
-    def httpResponse_bodyParse(self, **kwargs):
-        """
-        Returns the *body* from a http response.
-
-        :param kwargs: response = <string>
-        :return: the <body> from the http <string>
-        """
-
-        str_response    = ''
-        for k,v in kwargs.items():
-            if k == 'response': str_response    = v
-        try:
-            str_body        = str_response.split('\r\n\r\n')[1]
-            d_body          = yaml.load(str_body, Loader=yaml.FullLoader)
-            str_body        = json.dumps(d_body)
-        except:
-            str_body        = str_response
-        return str_body
-
     def __call__(self, *args, **kwargs):
         """
         Main entry point for "calling".
@@ -1566,6 +1542,8 @@ def zip_process(**kwargs):
     str_zipFileName = ""
     str_action      = "zip"
     str_arcroot     = ""
+    filesInZip      = 0
+    localFSsize     = 0
     for k,v in kwargs.items():
         if k == 'path':             str_localPath   = v
         if k == 'action':           str_action      = v
@@ -1599,7 +1577,21 @@ def zip_process(**kwargs):
                     }
         if str_mode     == 'r':
             ziphandler.extractall(str_localPath)
+
         ziphandler.close()
+
+        # Count the number of archive members
+        # See https://stackoverflow.com/questions/31124670/how-to-programmatically-count-the-number-of-files-in-an-archive-using-python
+        try:
+            with closing(zipfile.ZipFile(str_zipFileName)) as archive:
+                filesInZip = len(archive.infolist())
+        except:
+            filesInZip      = -1
+
+        # Deterime the size of the file system elements
+        root_directory      = Path(str_localPath)
+        localFSsize         = sum(f.stat().st_size for f in root_directory.glob('**/*') if f.is_file())
+
         str_msg             = '%s operation successful' % str_action
         b_status            = True
     except:
@@ -1608,6 +1600,8 @@ def zip_process(**kwargs):
     return {
         'msg':              str_msg,
         'fileProcessed':    str_zipFileName,
+        'filesInZip':       filesInZip,
+        'localFSsize':      localFSsize,
         'status':           b_status,
         'path':             str_localPath,
         'zipmode':          str_mode,

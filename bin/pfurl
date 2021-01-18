@@ -24,7 +24,7 @@ str_defIP   = [l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostn
 str_defPort = '5055'
 
 str_name    = 'pfurl'
-str_version = "2.2.4.4"
+str_version = "2.3.0.1"
 str_desc    = Colors.CYAN + """
 
         __            _
@@ -179,10 +179,6 @@ def synopsis(ab_shortOnly = False):
         If specified, print return JSON payload from remote service using
         <indent> indentation.
 
-        [--httpResponseBodyParse]
-        If specified, interpret the return payload as encapsulated in an
-        http response.
-
         [--unverifiedCerts]
         If specified, allows transmission of https requests with self signed SSL
         certificates.
@@ -330,7 +326,7 @@ parser.add_argument(
 )
 parser.add_argument(
     '--httpResponseBodyParse',
-    help    = 'if specified, assume full HTTP responses and parse only the body',
+    help    = 'deprecated option',
     dest    = 'b_httpResponseBodyParse',
     action  = 'store_true',
     default = False
@@ -377,6 +373,12 @@ if args.b_version:
     print("Version: %s" % str_version)
     sys.exit(1)
 
+if args.b_httpResponseBodyParse:
+    print('deprecated option: --httpResponseBodyParse. '
+          'Do not use as of 2020-11-09, see '
+          'https://github.com/FNNDSC/pfioh/pull/70')
+    sys.exit(1)
+
 pfurl  = pfurl.Pfurl(
     msg                         = args.msg,
     http                        = args.http,
@@ -387,7 +389,6 @@ pfurl  = pfurl.Pfurl(
     b_raw                       = args.b_raw,
     b_quiet                     = args.b_quiet,
     b_oneShot                   = args.b_oneShot,
-    b_httpResponseBodyParse     = args.b_httpResponseBodyParse,
     jsonwrapper                 = args.jsonwrapper,
     man                         = args.man,
     desc                        = str_desc,
@@ -397,7 +398,7 @@ pfurl  = pfurl.Pfurl(
     verbosity                   = args.verbosity,
     unverifiedCerts             = args.unverifiedCerts,
     authToken                   = args.authToken
-    )
+)
 
 str_response  = pfurl()
 

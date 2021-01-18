@@ -1,5 +1,5 @@
 ##################
-pfurl - v2.2.4.4
+pfurl - v2.3.0.1
 ##################
 
 .. image:: https://badge.fury.io/py/pfurl.svg
@@ -157,10 +157,6 @@ For the most up-to-date usage of ``pfurl``, consult the `pfurl wiki page <https:
         [--jsonpprintindent <indent>]
         If specified, print return JSON payload from remote service using
         <indent> indentation.
-
-        [--httpResponseBodyParse]
-        If specified, interpret the return payload as encapsulated in an
-        http response.
 
         [--unverifiedCerts]
         If specified, allows transmission of https requests with self signed SSL

@@ -1,28 +1,23 @@
-import sys
-# Make sure we are running python3.5+
-if 10 * sys.version_info[0]  + sys.version_info[1] < 35:
-    sys.exit("Sorry, only Python 3.5+ is supported.")
-
+from os import path
 from setuptools import setup
 
-
-def readme():
-    with open('README.rst') as f:
-        return f.read()
+with open(path.join(path.abspath(path.dirname(__file__)), 'README.rst')) as f:
+    readme = f.read()
 
 setup(
-      name             =   'pfurl',
-      version          =   '2.3.0.1',
-      description      =   '(Python) Path-File URL comms',
-      long_description =   readme(),
-      author           =   'Rudolph Pienaar',
-      author_email     =   'rudolph.pienaar@gmail.com',
-      url              =   'https://github.com/FNNDSC/pfurl',
-      packages         =   ['pfurl'],
-      install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pyyaml', 'pfmisc'],
-      test_suite       =   'nose.collector',
-      tests_require    =   ['nose'],
-      scripts          =   ['bin/pfurl'],
-      license          =   'MIT',
-      zip_safe         =   False
-     )
+    name             =   'pfurl',
+    version          =   '2.3.1',
+    description      =   'Path-File URL communication',
+    long_description =   readme,
+    author           =   'Rudolph Pienaar',
+    author_email     =   'rudolph.pienaar@gmail.com',
+    url              =   'https://github.com/FNNDSC/pfurl',
+    packages         =   ['pfurl'],
+    install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pyyaml', 'pfmisc'],
+    test_suite       =   'nose.collector',
+    tests_require    =   ['nose'],
+    scripts          =   ['bin/pfurl'],
+    license          =   'MIT',
+    zip_safe         =   False,
+    python_requires  =   '>=3.6'
+)

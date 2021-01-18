@@ -14,8 +14,6 @@ setup(
     url              =   'https://github.com/FNNDSC/pfurl',
     packages         =   ['pfurl'],
     install_requires =   ['pycurl', 'pyzmq', 'webob', 'pudb', 'psutil', 'pfmisc'],
-    test_suite       =   'nose.collector',
-    tests_require    =   ['nose'],
     scripts          =   ['bin/pfurl'],
     license          =   'MIT',
     zip_safe         =   False,

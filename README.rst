@@ -1,6 +1,6 @@
-##################
-pfurl - v2.3.0.1
-##################
+##############
+pfurl - v2.3.1
+##############
 
 .. image:: https://badge.fury.io/py/pfurl.svg
     :target: https://badge.fury.io/py/pfurl
@@ -201,6 +201,3 @@ Say 'hello' to a ``pfcon`` service listening on the localhost at port 5005:
                     }' --quiet --jsonpprintindent 4
 
 and print response "prettily" using an indent of 4.
-
-
-

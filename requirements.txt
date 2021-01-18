@@ -1,0 +1,8 @@
+pfmisc==2.2.2
+psutil==5.8.0
+pudb==2020.1
+pycurl==7.43.0.6
+Pygments==2.7.4
+pyzmq==21.0.1
+urwid==2.1.2
+WebOb==1.8.6
